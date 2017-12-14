@@ -1,10 +1,12 @@
 from loadData import loader
+import numpy as np
 from keras.models import Sequential
 from keras.layers import Conv2D, MaxPooling2D, Input, Dense, Flatten, Dropout, Activation
 from keras.optimizers import Adam
-from keras.callbacks import EarlyStopping, ModelCheckpoint
+from keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
+from keras.preprocessing.image import ImageDataGenerator
 
-
+np.random.seed(1337)
 
 class iceberg_model:
     def __init__(self, dataPath):
@@ -13,7 +15,7 @@ class iceberg_model:
 
     def create_model(self):
         # Conv Layer 1
-        self.model.add(Conv2D(64, kernel_size=(3, 3), activation='relu', input_shape=(75, 75, 1)))
+        self.model.add(Conv2D(64, kernel_size=(3, 3), activation='relu', input_shape=(75, 75, 3)))
         self.model.add(MaxPooling2D(pool_size=(3, 3), strides=(2, 2)))
         self.model.add(Dropout(0.2))
 
@@ -50,12 +52,14 @@ class iceberg_model:
         self.model.add(Activation('sigmoid'))
 
     def callbacks(self, fname):
-        stop = EarlyStopping('val_loss', mode='min')
+        stop = EarlyStopping(monitor='val_loss', patience=10, mode='min')
+        reduce_lr_loss = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=7, verbose=1, epsilon=1e-4,
+                                           mode='min')
         check = ModelCheckpoint(fname, save_best_only=True)
-        return stop, check
+        return stop, check, reduce_lr_loss
 
     def train_model(self):
-        opt = Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-8, decay=0.0)
+        opt = Adam(lr=0.001)
         self.create_model()
         self.model.compile(loss='binary_crossentropy',
                            optimizer=opt,
@@ -64,17 +68,24 @@ class iceberg_model:
         dataLoader = loader(self.dataPath)
         trainImg, valImg, trainLabels, valLabels = dataLoader.train_test_split(0.8)
 
-        earlyStop, modelCheck = self.callbacks('model_weights.hdf5')
+        earlyStop, modelCheck, reduce = self.callbacks('model_weights_d100.hdf5')
 
-        self.model.fit(trainImg, trainLabels,
-                       batch_size=24,
-                       epochs=50,
-                       verbose=1,
-                       validation_data=(valImg, valLabels),
-                       callbacks=[modelCheck])
+        datagen = ImageDataGenerator(horizontal_flip=True,
+                                     vertical_flip=True,
+                                     width_shift_range=0.3,
+                                     height_shift_range=0.3,
+                                     zoom_range=0.1,
+                                     rotation_range=20)
+        datagen.fit(trainImg)
+
+        self.model.fit_generator(datagen.flow(trainImg, trainLabels),
+                                 epochs=100,
+                                 verbose=1,
+                                 validation_data=(valImg, valLabels),
+                                 callbacks=[modelCheck])
 
 
 if __name__ == '__main__':
-    data_path = '../icebergClassifier/data_train/train.json'
+    data_path = '../iceberg_ship_classifier/data_train/train.json'
     x = iceberg_model(data_path)
     x.train_model()
