@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-
+import matplotlib.pyplot as plt
 
 class loader:
     def __init__(self, data_path):
@@ -22,7 +22,9 @@ class loader:
             self.band_1[:, :, i] = np.asarray(self.json_data['band_1'][i]).reshape((75, 75))
             self.band_2[:, :, i] = np.asarray(self.json_data['band_2'][i]).reshape((75, 75))
             self.id += [self.json_data['id'][i]]
-            self.labels += [self.json_data['is_iceberg'][i]]
+
+            if 'is_iceberg' in self.json_data.keys():
+                self.labels += [self.json_data['is_iceberg'][i]]
 
     def train_test_split(self, split_pct): # Only loads np_data_1
         split_num = int(len(self.labels)*split_pct)
@@ -50,5 +52,16 @@ class loader:
 
         return trainImg, valImg, trainLabel, valLabel
 
+
 if __name__ == '__main__':
     x = loader('../icebergClassifier/data_train/train.json')
+    trainImg, _, _, _ = x.train_test_split(0.8)
+    plt.figure()
+    plt.subplot(1, 2, 1)
+    plt.imshow(trainImg[0, :, :, 0])
+    plt.subplot(1, 2, 2)
+    plt.imshow(x.band_1_norm[:, :, 0])
+
+    plt.show()
+
+    print(trainImg[0, :, :, 0] == x.band_1_norm[:, :, 0])

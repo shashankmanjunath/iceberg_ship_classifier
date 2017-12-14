@@ -1,4 +1,5 @@
 from loadData import loader
+import pandas as pd
 import numpy as np
 from keras.models import Sequential
 from keras.layers import Conv2D, MaxPooling2D, Input, Dense, Flatten, Dropout, Activation
@@ -11,10 +12,13 @@ np.random.seed(1337)
 class iceberg_model:
     def __init__(self, dataPath):
         self.dataPath = dataPath
-        self.model = Sequential()
+        self.dataLoader = []
+        self.model = []
+        self.train_test_split_val = 0.8
 
     def create_model(self):
         # Conv Layer 1
+        self.model = Sequential()
         self.model.add(Conv2D(64, kernel_size=(3, 3), activation='relu', input_shape=(75, 75, 3)))
         self.model.add(MaxPooling2D(pool_size=(3, 3), strides=(2, 2)))
         self.model.add(Dropout(0.2))
@@ -51,6 +55,12 @@ class iceberg_model:
         self.model.add(Dense(1))
         self.model.add(Activation('sigmoid'))
 
+        opt = Adam(lr=0.001)
+
+        self.model.compile(loss='binary_crossentropy',
+                           optimizer=opt,
+                           metrics=['accuracy'])
+
     def callbacks(self, fname):
         stop = EarlyStopping(monitor='val_loss', patience=10, mode='min')
         reduce_lr_loss = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=7, verbose=1, epsilon=1e-4,
@@ -59,16 +69,12 @@ class iceberg_model:
         return stop, check, reduce_lr_loss
 
     def train_model(self):
-        opt = Adam(lr=0.001)
         self.create_model()
-        self.model.compile(loss='binary_crossentropy',
-                           optimizer=opt,
-                           metrics=['accuracy'])
 
-        dataLoader = loader(self.dataPath)
-        trainImg, valImg, trainLabels, valLabels = dataLoader.train_test_split(0.8)
+        self.dataLoader = loader(self.dataPath)
+        trainImg, valImg, trainLabels, valLabels = self.dataLoader.train_test_split(self.train_test_split_val)
 
-        earlyStop, modelCheck, reduce = self.callbacks('model_weights_d100.hdf5')
+        earlyStop, modelCheck, reduce = self.callbacks('model_weights.hdf5')
 
         datagen = ImageDataGenerator(horizontal_flip=True,
                                      vertical_flip=True,
@@ -76,16 +82,61 @@ class iceberg_model:
                                      height_shift_range=0.3,
                                      zoom_range=0.1,
                                      rotation_range=20)
-        datagen.fit(trainImg)
+
+        val_datagen = ImageDataGenerator(horizontal_flip=True,
+                                         vertical_flip=True,
+                                         width_shift_range=0.3,
+                                         height_shift_range=0.3,
+                                         zoom_range=0.1,
+                                        rotation_range=20)
 
         self.model.fit_generator(datagen.flow(trainImg, trainLabels),
-                                 epochs=100,
+                                 epochs=20,
                                  verbose=1,
-                                 validation_data=(valImg, valLabels),
+                                 validation_data=val_datagen.flow(valImg, valLabels),
                                  callbacks=[modelCheck])
+
+    def test_model(self, wpath):
+        if not self.dataLoader:
+            self.dataLoader = loader(self.dataPath)
+        _, valImg, _, valLabels = self.dataLoader.train_test_split(self.train_test_split_val)
+
+        if not self.model:
+            self.create_model()
+
+        print(self.model.summary())
+
+        self.model.load_weights(filepath=wpath)
+        score = self.model.evaluate(valImg, valLabels, verbose=1)
+        print('Test loss: ', score[0])
+        print('Test accuracy: ', score[1])
+
+    def submission(self, testpath, wname):
+        testLoader = loader(testpath)
+        testImg = np.zeros((len(testLoader.json_data), 75, 75, 3))
+
+        for i in range(len(testLoader.json_data)):
+            testImg[i, :, :, 0] = testLoader.band_1_norm[:, :, i]
+            testImg[i, :, :, 1] = testLoader.band_2_norm[:, :, i]
+            testImg[i, :, :, 2] = testLoader.band_3_norm[:, :, i]
+
+        if not self.model:
+            self.create_model()
+
+        self.model.load_weights(wname)
+
+        pred = self.model.predict(testImg, verbose=1)
+
+        submission = pd.DataFrame()
+        submission['id'] = testLoader.id
+        submission['is_iceberg'] = pred.reshape((pred.shape[0]))
+        submission.to_csv('sub.csv', index=False)
 
 
 if __name__ == '__main__':
-    data_path = '../iceberg_ship_classifier/data_train/train.json'
+    data_path = '../icebergClassifier/data_train/train.json'
     x = iceberg_model(data_path)
-    x.train_model()
+    # x.train_model()
+    # x.test_model('../icebergClassifier/model_weights.hdf5')
+    x.submission('../icebergClassifier/data_test/test.json', '../icebergClassifier/model_weights.hdf5')
+
