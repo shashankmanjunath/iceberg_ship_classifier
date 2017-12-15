@@ -5,8 +5,8 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 
 #Load the data.
-train = pd.read_json("../icebergClassifier/data_train/train.json")
-test = pd.read_json("../icebergClassifier/data_test/test.json")
+train = pd.read_json("../iceberg_ship_classifier/data_train/train.json")
+test = pd.read_json("../iceberg_ship_classifier/data_test/test.json")
 
 #Generate the training data
 #Create 3 bands having HH, HV and avg of both
@@ -81,15 +81,13 @@ def get_callbacks(filepath, patience=2):
     es = EarlyStopping('val_loss', patience=patience, mode="min")
     msave = ModelCheckpoint(filepath, save_best_only=True)
     return [es, msave]
-file_path = "fork_nb_weights.hdf5"
+file_path = "fork_nb_weights_2.hdf5"
 callbacks = get_callbacks(filepath=file_path, patience=5)
 
 
 target_train=train['is_iceberg']
 X_train_cv, X_valid, y_train_cv, y_valid = train_test_split(X_train, target_train, random_state=1, train_size=0.75)
 
-#Without denoising, core features.
-import os
 
 gmodel=getModel()
 

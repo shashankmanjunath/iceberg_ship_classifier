@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 
 class loader:
@@ -26,42 +27,15 @@ class loader:
             if 'is_iceberg' in self.json_data.keys():
                 self.labels += [self.json_data['is_iceberg'][i]]
 
-    def train_test_split(self, split_pct): # Only loads np_data_1
-        split_num = int(len(self.labels)*split_pct)
+    def train_test_split(self, split_pct):
+        imgStack = np.zeros((len(self.labels), 75, 75, 3))
+        for i in range(len(self.labels)):
+            imgStack[i, :, :, 0] = self.band_1_norm[:, :, i]
+            imgStack[i, :, :, 1] = self.band_2_norm[:, :, i]
+            imgStack[i, :, :, 2] = self.band_3_norm[:, :, i]
 
-        trainImg = np.zeros((split_num, 75, 75, 3))
-        valImg = np.zeros((len(self.labels) - split_num, 75, 75, 3))
-
-        trainLabel = np.zeros((split_num, 1))
-        valLabel = np.zeros((len(self.labels) - split_num, 1))
-
-        for i in range(split_num):
-            trainImg[i, :, :, 0] = self.band_1_norm[:, :, i]
-            trainImg[i, :, :, 1] = self.band_2_norm[:, :, i]
-            trainImg[i, :, :, 2] = self.band_3_norm[:, :, i]
-            trainLabel[i] = self.labels[i]
-
-        count = 0
-
-        for i in range(split_num, len(self.labels)):
-            valImg[count, :, :, 0] = self.band_1_norm[:, :, i]
-            valImg[count, :, :, 1] = self.band_2_norm[:, :, i]
-            valImg[count, :, :, 2] = self.band_3_norm[:, :, i]
-            trainLabel[count] = self.labels[i]
-            count += 1
-
+        trainImg, valImg, trainLabel, valLabel = train_test_split(imgStack, self.labels, random_state=1,
+                                                                  train_size=split_pct)
+        trainLabel = np.asarray(trainLabel)
+        valLabel = np.asarray(valLabel)
         return trainImg, valImg, trainLabel, valLabel
-
-
-if __name__ == '__main__':
-    x = loader('../icebergClassifier/data_train/train.json')
-    trainImg, _, _, _ = x.train_test_split(0.8)
-    plt.figure()
-    plt.subplot(1, 2, 1)
-    plt.imshow(trainImg[0, :, :, 0])
-    plt.subplot(1, 2, 2)
-    plt.imshow(x.band_1_norm[:, :, 0])
-
-    plt.show()
-
-    print(trainImg[0, :, :, 0] == x.band_1_norm[:, :, 0])

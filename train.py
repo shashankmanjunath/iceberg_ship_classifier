@@ -6,6 +6,7 @@ from keras.layers import Conv2D, MaxPooling2D, Input, Dense, Flatten, Dropout, A
 from keras.optimizers import Adam
 from keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
 from keras.preprocessing.image import ImageDataGenerator
+from matplotlib import pyplot as plt
 
 np.random.seed(1337)
 
@@ -15,6 +16,7 @@ class iceberg_model:
         self.dataLoader = []
         self.model = []
         self.train_test_split_val = 0.8
+        self.run_weight_name = 'model_weights_1214_up_3.hdf5'
 
     def create_model(self):
         # Conv Layer 1
@@ -28,15 +30,23 @@ class iceberg_model:
         self.model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
         self.model.add(Dropout(0.2))
 
-        # Conv Layer 3
-        self.model.add(Conv2D(128, kernel_size=(3, 3), activation='relu'))
+        self.model.add(Conv2D(256, kernel_size=(3, 3), activation='relu'))
         self.model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
         self.model.add(Dropout(0.2))
 
-        # Conv Layer 4
-        self.model.add(Conv2D(64, kernel_size=(3, 3), activation='relu'))
-        self.model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
-        self.model.add(Dropout(0.2))
+        # self.model.add(Conv2D(384, kernel_size=(3, 3), activation='relu'))
+        # self.model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
+        # self.model.add(Dropout(0.2))
+        #
+        # # Conv Layer 3
+        # self.model.add(Conv2D(128, kernel_size=(3, 3), activation='relu'))
+        # self.model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
+        # self.model.add(Dropout(0.2))
+        #
+        # # Conv Layer 4
+        # self.model.add(Conv2D(64, kernel_size=(3, 3), activation='relu'))
+        # self.model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
+        # self.model.add(Dropout(0.2))
 
         # Flatten the data for upcoming dense layers
         self.model.add(Flatten())
@@ -74,7 +84,7 @@ class iceberg_model:
         self.dataLoader = loader(self.dataPath)
         trainImg, valImg, trainLabels, valLabels = self.dataLoader.train_test_split(self.train_test_split_val)
 
-        earlyStop, modelCheck, reduce = self.callbacks('model_weights.hdf5')
+        earlyStop, modelCheck, reduce = self.callbacks(self.run_weight_name)
 
         datagen = ImageDataGenerator(horizontal_flip=True,
                                      vertical_flip=True,
@@ -90,13 +100,24 @@ class iceberg_model:
                                          zoom_range=0.1,
                                         rotation_range=20)
 
-        self.model.fit_generator(datagen.flow(trainImg, trainLabels),
-                                 epochs=20,
-                                 verbose=1,
-                                 validation_data=val_datagen.flow(valImg, valLabels),
-                                 callbacks=[modelCheck])
+        history = self.model.fit_generator(datagen.flow(trainImg, trainLabels),
+                                           epochs=2000,
+                                           verbose=1,
+                                           validation_data=(valImg, valLabels),
+                                           callbacks=[modelCheck, earlyStop, reduce])
+
+        plt.figure()
+        plt.plot(history.history['acc'])
+        plt.plot(history.history['val_acc'])
+        plt.title('Model Accuracy')
+        plt.xlabel('Epoch')
+        plt.ylabel('Accuracy')
+        plt.legend(['Train', 'Test'], loc='upper left')
+        plt.show()
+
 
     def test_model(self, wpath):
+        print('Testing model...')
         if not self.dataLoader:
             self.dataLoader = loader(self.dataPath)
         _, valImg, _, valLabels = self.dataLoader.train_test_split(self.train_test_split_val)
@@ -104,14 +125,13 @@ class iceberg_model:
         if not self.model:
             self.create_model()
 
-        print(self.model.summary())
-
         self.model.load_weights(filepath=wpath)
         score = self.model.evaluate(valImg, valLabels, verbose=1)
         print('Test loss: ', score[0])
         print('Test accuracy: ', score[1])
 
     def submission(self, testpath, wname):
+        print('Generating submission...')
         testLoader = loader(testpath)
         testImg = np.zeros((len(testLoader.json_data), 75, 75, 3))
 
@@ -130,13 +150,14 @@ class iceberg_model:
         submission = pd.DataFrame()
         submission['id'] = testLoader.id
         submission['is_iceberg'] = pred.reshape((pred.shape[0]))
-        submission.to_csv('sub.csv', index=False)
+        submission.to_csv('sub_' + self.run_weight_name[:-5] + '.csv', index=False)
 
 
 if __name__ == '__main__':
-    data_path = '../icebergClassifier/data_train/train.json'
+    data_path = '../iceberg_ship_classifier/data_train/train.json'
     x = iceberg_model(data_path)
-    # x.train_model()
-    # x.test_model('../icebergClassifier/model_weights.hdf5')
-    x.submission('../icebergClassifier/data_test/test.json', '../icebergClassifier/model_weights.hdf5')
+    print(x.run_weight_name[:-5])
+    x.train_model()
+    x.test_model('../iceberg_ship_classifier/' + x.run_weight_name)
+    # x.submission('../iceberg_ship_classifier/data_test/test.json', '../iceberg_ship_classifier/' + x.run_weight_name)
 
