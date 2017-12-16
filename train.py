@@ -82,6 +82,7 @@ class iceberg_model:
         return stop, check, reduce_lr_loss
 
     def train_model(self):
+        print('Training Model...')
         self.create_model()
 
         self.dataLoader = loader(self.dataPath)
@@ -137,6 +138,7 @@ class iceberg_model:
         return loss, accuracy
 
     def kFoldValidation(self):
+        print('Validating Model...')
         if not self.dataLoader:
             self.dataLoader = loader(self.dataPath)
 
@@ -146,11 +148,13 @@ class iceberg_model:
             self.create_model()
 
         _, earlyStop, reduce = self.callbacks(self.run_weight_name)
-
-        kfold = StratifiedKFold(n_splits=10, shuffle=True, random_state=965)
+        n_split = 10
+        kfold = StratifiedKFold(n_splits=n_split, shuffle=True, random_state=965)
         scores = []
+        count = 0
 
         for train, test in kfold.split(valImg, valLabels):
+            print('Run ' + (count + 1) + ' out of ' + n_split)
             self.model.fit(valImg[train], valLabels[train],
                            epochs=2000,
                            verbose=1,
@@ -158,6 +162,8 @@ class iceberg_model:
             scores = self.model.eval(valImg[train], valLabels[train])
             print("%s: %.2f%%" % (self.model.metrics_names[1], scores[1]*100))
             scores.append(scores[1] * 100)
+            count += 1
+            
         print("%.2f%% (+/- %.2f%%)" % (np.mean(scores), np.std(scores)))
         return 0
 
