@@ -6,9 +6,12 @@ from keras.layers import Conv2D, MaxPooling2D, Input, Dense, Flatten, Dropout, A
 from keras.optimizers import Adam
 from keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
 from keras.preprocessing.image import ImageDataGenerator
-from matplotlib import pyplot as plt
+from sklearn.model_selection import StratifiedKFold
 
-np.random.seed(1337)
+
+seed = 965
+np.random.seed(965)
+
 
 class iceberg_model:
     def __init__(self, dataPath):
@@ -102,18 +105,19 @@ class iceberg_model:
 
         history = self.model.fit_generator(datagen.flow(trainImg, trainLabels),
                                            epochs=2000,
+                                           steps_per_epoch=1,
                                            verbose=1,
                                            validation_data=(valImg, valLabels),
                                            callbacks=[modelCheck, earlyStop, reduce])
 
-        plt.figure()
-        plt.plot(history.history['acc'])
-        plt.plot(history.history['val_acc'])
-        plt.title('Model Accuracy')
-        plt.xlabel('Epoch')
-        plt.ylabel('Accuracy')
-        plt.legend(['Train', 'Test'], loc='upper left')
-        plt.show()
+        # plt.figure()
+        # plt.plot(history.history['acc'])
+        # plt.plot(history.history['val_acc'])
+        # plt.title('Model Accuracy')
+        # plt.xlabel('Epoch')
+        # plt.ylabel('Accuracy')
+        # plt.legend(['Train', 'Test'], loc='upper left')
+        # plt.show()
 
 
     def test_model(self, wpath):
@@ -129,6 +133,33 @@ class iceberg_model:
         score = self.model.evaluate(valImg, valLabels, verbose=1)
         print('Test loss: ', score[0])
         print('Test accuracy: ', score[1])
+        loss, accuracy = score[0], score[1]
+        return loss, accuracy
+
+    def kFoldValidation(self):
+        if not self.dataLoader:
+            self.dataLoader = loader(self.dataPath)
+
+        _, valImg, _, valLabels = self.dataLoader.train_test_split(self.train_test_split_val)
+
+        if not self.model:
+            self.create_model()
+
+        _, earlyStop, reduce = self.callbacks(self.run_weight_name)
+
+        kfold = StratifiedKFold(n_splits=10, shuffle=True, random_state=965)
+        scores = []
+
+        for train, test in kfold.split(valImg, valLabels):
+            self.model.fit(valImg[train], valLabels[train],
+                           epochs=2000,
+                           verbose=1,
+                           callbacks=[earlyStop, reduce])
+            scores = self.model.eval(valImg[train], valLabels[train])
+            print("%s: %.2f%%" % (self.model.metrics_names[1], scores[1]*100))
+            scores.append(scores[1] * 100)
+        print("%.2f%% (+/- %.2f%%)" % (np.mean(scores), np.std(scores)))
+        return 0
 
     def submission(self, testpath, wname):
         print('Generating submission...')
@@ -156,8 +187,8 @@ class iceberg_model:
 if __name__ == '__main__':
     data_path = '../iceberg_ship_classifier/data_train/train.json'
     x = iceberg_model(data_path)
-    print(x.run_weight_name[:-5])
     x.train_model()
-    x.test_model('../iceberg_ship_classifier/' + x.run_weight_name)
-    # x.submission('../iceberg_ship_classifier/data_test/test.json', '../iceberg_ship_classifier/' + x.run_weight_name)
+    x.kFoldValidation()
+    # x.test_model('../iceberg_ship_classifier/' + x.run_weight_name)
+    x.submission('../iceberg_ship_classifier/data_test/test.json', '../iceberg_ship_classifier/' + x.run_weight_name)
 
