@@ -75,8 +75,8 @@ class iceberg_model:
                            metrics=['accuracy'])
 
     def callbacks(self, fname):
-        stop = EarlyStopping(monitor='val_loss', patience=10, mode='min')
-        reduce_lr_loss = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=7, verbose=1, epsilon=1e-4,
+        stop = EarlyStopping(monitor='val_loss', patience=7, mode='min')
+        reduce_lr_loss = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=10, verbose=1, epsilon=1e-4,
                                            mode='min')
         check = ModelCheckpoint(fname, save_best_only=True)
         return stop, check, reduce_lr_loss
@@ -159,7 +159,7 @@ class iceberg_model:
                            epochs=150,
                            verbose=1,
                            callbacks=[earlyStop, reduce])
-            scores = self.model.eval(valImg[train], valLabels[train])
+            scores = self.model.evaluate(valImg[train], valLabels[train])
             print("%s: %.2f%%" % (self.model.metrics_names[1], scores[1]*100))
             scores.append(scores[1] * 100)
             count += 1
@@ -193,7 +193,7 @@ class iceberg_model:
 if __name__ == '__main__':
     data_path = '../iceberg_ship_classifier/data_train/train.json'
     x = iceberg_model(data_path)
-    x.train_model()
+    # x.train_model()
     x.kFoldValidation()
     # x.test_model('../iceberg_ship_classifier/' + x.run_weight_name)
     x.submission('../iceberg_ship_classifier/data_test/test.json', '../iceberg_ship_classifier/' + x.run_weight_name)
