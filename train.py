@@ -148,7 +148,7 @@ class iceberg_model:
             self.create_model()
 
         _, earlyStop, reduce = self.callbacks(self.run_weight_name)
-        n_split = 10
+        n_split = 5
         kfold = StratifiedKFold(n_splits=n_split, shuffle=True, random_state=965)
         scores = []
         count = 0
@@ -156,7 +156,7 @@ class iceberg_model:
         for train, test in kfold.split(valImg, valLabels):
             print('Run ' + str(count + 1) + ' out of ' + str(n_split))
             self.model.fit(valImg[train], valLabels[train],
-                           epochs=150,
+                           epochs=50,
                            verbose=1,
                            callbacks=[earlyStop, reduce])
             scores = self.model.evaluate(valImg[train], valLabels[train])
