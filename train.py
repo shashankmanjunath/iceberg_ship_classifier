@@ -74,11 +74,11 @@ class iceberg_model:
                            optimizer=opt,
                            metrics=['accuracy'])
 
-    def callbacks(self, fname):
+    def callbacks(self):
         stop = EarlyStopping(monitor='val_loss', patience=7, mode='min')
+        check = ModelCheckpoint(self.run_weight_name, save_best_only=True)
         reduce_lr_loss = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=10, verbose=1, epsilon=1e-4,
                                            mode='min')
-        check = ModelCheckpoint(fname, save_best_only=True)
         return stop, check, reduce_lr_loss
 
     def train_model(self):
@@ -143,10 +143,9 @@ class iceberg_model:
 
         _, valImg, _, valLabels = self.dataLoader.train_test_split(self.train_test_split_val)
 
-        earlyStop, _, reduce= self.callbacks(self.run_weight_name)
+        earlyStop, _, _ = self.callbacks(self.run_weight_name)
         n_split = 5
         kfold = StratifiedKFold(n_splits=n_split, shuffle=True, random_state=seed)
-        scores = []
         loss = []
         count = 0
 
@@ -157,25 +156,19 @@ class iceberg_model:
                            epochs=50,
                            batch_size=1,
                            verbose=1,
-                           callbacks=[earlyStop, reduce])
+                           callbacks=[earlyStop])
 
             scores = self.model.evaluate(valImg[test], valLabels[test])
-            scores.append(scores[1] * 100)
             loss.append(scores[0])
-
-            print("")
-            print("%s: %.2f%%" % (self.model.metrics_names[1], scores[1]*100))
-            print("")
             count += 1
 
         print("")
         print("Length of scores: " + str(len(loss)))
 
-        for i in range(len(scores)):
-            print("Run %d: %.2f%% Accurate, %.2f loss" % (i+1, scores[i], loss[i]))
+        for i in range(len(loss)):
+            print("Run " + str(i+1) + ": " + str(loss[i]))
 
-        print("%.2f%% (+/- %.2f%%)" % (np.mean(loss), np.std(loss)))
-        print("%.2f%% (+/- %.2f%%)" % (np.mean(scores), np.std(scores)))
+        print("Loss: " + str(np.mean(loss), str(np.std(loss))))
         print("")
         return 0
 
