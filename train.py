@@ -19,7 +19,7 @@ class iceberg_model:
         self.dataLoader = []
         self.model = []
         self.train_test_split_val = 0.8
-        self.run_weight_name = 'model_weights_1214_up_3.hdf5'
+        self.run_weight_name = 'model_weights_1218.hdf5'
 
     def create_model(self):
         # Conv Layer 1
@@ -97,19 +97,12 @@ class iceberg_model:
                                      zoom_range=0.1,
                                      rotation_range=20)
 
-        val_datagen = ImageDataGenerator(horizontal_flip=True,
-                                         vertical_flip=True,
-                                         width_shift_range=0.3,
-                                         height_shift_range=0.3,
-                                         zoom_range=0.1,
-                                        rotation_range=20)
-
         history = self.model.fit_generator(datagen.flow(trainImg, trainLabels),
-                                           epochs=2000,
+                                           epochs=500,
                                            steps_per_epoch=1,
                                            verbose=1,
-                                           validation_data=(valImg, valLabels),
-                                           callbacks=[modelCheck, earlyStop, reduce])
+                                           validation_data=(valImg, valLabels))
+                                           # callbacks=[modelCheck, earlyStop, reduce])
 
         # plt.figure()
         # plt.plot(history.history['acc'])
@@ -168,7 +161,7 @@ class iceberg_model:
         for i in range(len(loss)):
             print("Run " + str(i+1) + ": " + str(loss[i]))
 
-        print("Loss: " + str(np.mean(loss), str(np.std(loss))))
+        print("Loss: " + str(np.mean(loss)), str(np.std(loss)))
         print("")
         return 0
 
@@ -198,8 +191,8 @@ class iceberg_model:
 if __name__ == '__main__':
     data_path = '../iceberg_ship_classifier/data_train/train.json'
     x = iceberg_model(data_path)
-    # x.train_model()
-    x.kFoldValidation()
-    # x.test_model('../iceberg_ship_classifier/' + x.run_weight_name)
+    x.train_model()
+    # x.kFoldValidation()
+    x.test_model('../iceberg_ship_classifier/' + x.run_weight_name)
     # x.submission('../iceberg_ship_classifier/data_test/test.json', '../iceberg_ship_classifier/' + x.run_weight_name)
 
