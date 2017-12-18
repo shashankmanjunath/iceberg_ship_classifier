@@ -88,7 +88,7 @@ class iceberg_model:
         self.dataLoader = loader(self.dataPath)
         trainImg, valImg, trainLabels, valLabels = self.dataLoader.train_test_split(self.train_test_split_val)
 
-        earlyStop, modelCheck, reduce = self.callbacks(self.run_weight_name)
+        earlyStop, modelCheck, reduce = self.callbacks()
 
         datagen = ImageDataGenerator(horizontal_flip=True,
                                      vertical_flip=True,
@@ -143,7 +143,7 @@ class iceberg_model:
 
         _, valImg, _, valLabels = self.dataLoader.train_test_split(self.train_test_split_val)
 
-        earlyStop, _, _ = self.callbacks(self.run_weight_name)
+        earlyStop = EarlyStopping(monitor='loss', patience=7, mode='min')
         n_split = 5
         kfold = StratifiedKFold(n_splits=n_split, shuffle=True, random_state=seed)
         loss = []
