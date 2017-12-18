@@ -143,7 +143,7 @@ class iceberg_model:
 
         trainImg, _, trainLabel, _ = self.dataLoader.train_test_split(self.train_test_split_val)
 
-        earlyStop = EarlyStopping(monitor='loss', patience=15, mode='min')
+        earlyStop = EarlyStopping(monitor='loss', patience=5, mode='min')
         n_split = 5
         kfold = StratifiedKFold(n_splits=n_split, shuffle=True, random_state=seed)
         loss = []
@@ -153,8 +153,7 @@ class iceberg_model:
             print('Run ' + str(count + 1) + ' out of ' + str(n_split))
             self.create_model()
             self.model.fit(trainImg[train], trainLabel[train],
-                           epochs=250,
-                           steps_per_epoch=1,
+                           epochs=100,
                            verbose=1,
                            callbacks=[earlyStop])
 
@@ -194,35 +193,6 @@ class iceberg_model:
         submission['id'] = testLoader.id
         submission['is_iceberg'] = pred.reshape((pred.shape[0]))
         submission.to_csv('sub_' + self.run_weight_name[:-5] + '.csv', index=False)
-
-
-
-def get_more_images(imgs):
-    more_images = []
-    vert_flip_imgs = []
-    hori_flip_imgs = []
-
-    for i in range(0, imgs.shape[0]):
-        a = imgs[i, :, :, 0]
-        b = imgs[i, :, :, 1]
-        c = imgs[i, :, :, 2]
-
-        av = cv2.flip(a, 1)
-        ah = cv2.flip(a, 0)
-        bv = cv2.flip(b, 1)
-        bh = cv2.flip(b, 0)
-        cv = cv2.flip(c, 1)
-        ch = cv2.flip(c, 0)
-
-        vert_flip_imgs.append(np.dstack((av, bv, cv)))
-        hori_flip_imgs.append(np.dstack((ah, bh, ch)))
-
-    v = np.array(vert_flip_imgs)
-    h = np.array(hori_flip_imgs)
-
-    more_images = np.concatenate((imgs, v, h))
-
-    return more_images
 
 
 if __name__ == '__main__':
