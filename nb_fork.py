@@ -6,8 +6,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.model_selection import StratifiedKFold
 
 #Load the data.
-# train = pd.read_json("../iceberg_ship_classifier/data_train/train.json")
-train = pd.read_json("../icebergClassifier/data_train/train.json")
+train = pd.read_json("../iceberg_ship_classifier/data_train/train.json")
+# train = pd.read_json("../icebergClassifier/data_train/train.json")
 # test = pd.read_json("../iceberg_ship_classifier/data_test/test.json")
 
 #Generate the training data
@@ -74,7 +74,6 @@ def getModel():
     gmodel.compile(loss='binary_crossentropy',
                   optimizer=mypotim,
                   metrics=['accuracy'])
-    gmodel.summary()
     return gmodel
 
 
@@ -91,7 +90,7 @@ target_train=train['is_iceberg']
 X_train_cv, X_valid, y_train_cv, y_valid = train_test_split(X_train, target_train, random_state=1, train_size=0.75)
 
 print('Validating Model...')
-n_split = 5
+n_split = 10
 kfold = StratifiedKFold(n_splits=n_split, shuffle=True)
 loss = []
 count = 0
@@ -101,9 +100,8 @@ for train, test in kfold.split(X_train_cv, y_train_cv):
     gmodel = getModel()
     gmodel.fit(X_train_cv[train], y_train_cv[train],
                epochs=100,
-               batch_size=1,
-               verbose=1,
-               callbacks=callbacks)
+               batch_size=24,
+               verbose=1)
 
     scores = gmodel.evaluate(X_train_cv[test], y_train_cv[test])
     loss.append(scores[0])
@@ -119,6 +117,8 @@ print("Loss: " + str(np.mean(loss)), str(np.std(loss)))
 print("")
 
 
+# gmodel = getModel()
+#
 # gmodel.fit(X_train_cv, y_train_cv,
 #           batch_size=24,
 #           epochs=50,
