@@ -143,7 +143,7 @@ class iceberg_model:
 
         _, valImg, _, valLabels = self.dataLoader.train_test_split(self.train_test_split_val)
 
-        earlyStop = EarlyStopping(monitor='loss', patience=7, mode='min')
+        earlyStop = EarlyStopping(monitor='loss', patience=100, mode='min')
         n_split = 5
         kfold = StratifiedKFold(n_splits=n_split, shuffle=True, random_state=seed)
         loss = []
@@ -153,8 +153,8 @@ class iceberg_model:
             print('Run ' + str(count + 1) + ' out of ' + str(n_split))
             self.create_model()
             self.model.fit(valImg[train], valLabels[train],
-                           epochs=500,
-                           batch_size=1,
+                           epochs=250,
+                           steps_per_epoch=1,
                            verbose=1,
                            callbacks=[earlyStop])
 
@@ -196,10 +196,10 @@ class iceberg_model:
 
 
 if __name__ == '__main__':
-    data_path = '../iceberg_ship_classifier/data_train/train.json'
+    data_path = '../icebergClassifier/data_train/train.json'
     x = iceberg_model(data_path)
     # x.train_model()
     x.kFoldValidation()
-    x.test_model('../iceberg_ship_classifier/' + x.run_weight_name)
+    # x.test_model('../iceberg_ship_classifier/' + x.run_weight_name)
     # x.submission('../iceberg_ship_classifier/data_test/test.json', '../iceberg_ship_classifier/' + x.run_weight_name)
 
