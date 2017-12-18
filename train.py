@@ -68,7 +68,7 @@ class iceberg_model:
         self.model.add(Dense(1))
         self.model.add(Activation('sigmoid'))
 
-        opt = Adam(lr=0.001)
+        opt = Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.0)
 
         self.model.compile(loss='binary_crossentropy',
                            optimizer=opt,
@@ -77,9 +77,9 @@ class iceberg_model:
     def callbacks(self):
         stop = EarlyStopping(monitor='val_loss', patience=7, mode='min')
         check = ModelCheckpoint(self.run_weight_name, save_best_only=True)
-        reduce_lr_loss = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=10, verbose=1, epsilon=1e-4,
-                                           mode='min')
-        return stop, check, reduce_lr_loss
+        # reduce_lr_loss = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=10, verbose=1, epsilon=1e-4,
+        #                                    mode='min')
+        return stop, check
 
     def train_model(self):
         print('Training Model...')
@@ -88,21 +88,28 @@ class iceberg_model:
         self.dataLoader = loader(self.dataPath)
         trainImg, valImg, trainLabels, valLabels = self.dataLoader.train_test_split(self.train_test_split_val)
 
-        earlyStop, modelCheck, reduce = self.callbacks()
+        earlyStop, modelCheck = self.callbacks()
 
-        datagen = ImageDataGenerator(horizontal_flip=True,
-                                     vertical_flip=True,
-                                     width_shift_range=0.3,
-                                     height_shift_range=0.3,
-                                     zoom_range=0.1,
-                                     rotation_range=20)
+        self.model.fit(trainImg, trainLabels,
+                       batch_size=24,
+                       epochs=50,
+                       verbose=1,
+                       validation_data=(valImg, valLabels),
+                       callbacks=[earlyStop, modelCheck])
 
-        history = self.model.fit_generator(datagen.flow(trainImg, trainLabels),
-                                           epochs=500,
-                                           steps_per_epoch=1,
-                                           verbose=1,
-                                           validation_data=(valImg, valLabels),
-                                           callbacks=[modelCheck, earlyStop, reduce])
+        # datagen = ImageDataGenerator(horizontal_flip=True,
+        #                              vertical_flip=True,
+        #                              width_shift_range=0.3,
+        #                              height_shift_range=0.3,
+        #                              zoom_range=0.1,
+        #                              rotation_range=20)
+        #
+        # history = self.model.fit_generator(datagen.flow(trainImg, trainLabels),
+        #                                    epochs=500,
+        #                                    steps_per_epoch=1,
+        #                                    verbose=1,
+        #                                    validation_data=(valImg, valLabels),
+        #                                    callbacks=[modelCheck, earlyStop, reduce])
 
         # plt.figure()
         # plt.plot(history.history['acc'])
