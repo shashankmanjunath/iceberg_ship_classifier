@@ -9,8 +9,8 @@ from keras.preprocessing.image import ImageDataGenerator
 from sklearn.model_selection import StratifiedKFold
 
 
-seed = 965
-np.random.seed(965)
+seed = 1337
+np.random.seed(seed)
 
 
 class iceberg_model:
@@ -33,23 +33,23 @@ class iceberg_model:
         self.model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
         self.model.add(Dropout(0.2))
 
-        self.model.add(Conv2D(256, kernel_size=(3, 3), activation='relu'))
-        self.model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
-        self.model.add(Dropout(0.2))
+        # self.model.add(Conv2D(256, kernel_size=(3, 3), activation='relu'))
+        # self.model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
+        # self.model.add(Dropout(0.2))
 
         # self.model.add(Conv2D(384, kernel_size=(3, 3), activation='relu'))
         # self.model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
         # self.model.add(Dropout(0.2))
-        #
-        # # Conv Layer 3
-        # self.model.add(Conv2D(128, kernel_size=(3, 3), activation='relu'))
-        # self.model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
-        # self.model.add(Dropout(0.2))
-        #
-        # # Conv Layer 4
-        # self.model.add(Conv2D(64, kernel_size=(3, 3), activation='relu'))
-        # self.model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
-        # self.model.add(Dropout(0.2))
+
+        # Conv Layer 3
+        self.model.add(Conv2D(128, kernel_size=(3, 3), activation='relu'))
+        self.model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
+        self.model.add(Dropout(0.2))
+
+        # Conv Layer 4
+        self.model.add(Conv2D(64, kernel_size=(3, 3), activation='relu'))
+        self.model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
+        self.model.add(Dropout(0.2))
 
         # Flatten the data for upcoming dense layers
         self.model.add(Flatten())
@@ -143,36 +143,40 @@ class iceberg_model:
 
         _, valImg, _, valLabels = self.dataLoader.train_test_split(self.train_test_split_val)
 
-        if not self.model:
-            self.create_model()
-
-        _, earlyStop, reduce = self.callbacks(self.run_weight_name)
+        earlyStop, _, reduce= self.callbacks(self.run_weight_name)
         n_split = 5
-        kfold = StratifiedKFold(n_splits=n_split, shuffle=True, random_state=965)
+        kfold = StratifiedKFold(n_splits=n_split, shuffle=True, random_state=seed)
         scores = []
         loss = []
         count = 0
 
         for train, test in kfold.split(valImg, valLabels):
             print('Run ' + str(count + 1) + ' out of ' + str(n_split))
+            self.create_model()
             self.model.fit(valImg[train], valLabels[train],
-                           epochs=30,
+                           epochs=50,
                            batch_size=1,
                            verbose=1,
                            callbacks=[earlyStop, reduce])
+
             scores = self.model.evaluate(valImg[test], valLabels[test])
-            print("%s: %.2f%%" % (self.model.metrics_names[1], scores[1]*100))
             scores.append(scores[1] * 100)
             loss.append(scores[0])
+
+            print("")
+            print("%s: %.2f%%" % (self.model.metrics_names[1], scores[1]*100))
+            print("")
             count += 1
 
-        print("Length of scores: %d", (len(scores)))
+        print("")
+        print("Length of scores: " + str(len(loss)))
 
         for i in range(len(scores)):
             print("Run %d: %.2f%% Accurate, %.2f loss" % (i+1, scores[i], loss[i]))
 
         print("%.2f%% (+/- %.2f%%)" % (np.mean(loss), np.std(loss)))
         print("%.2f%% (+/- %.2f%%)" % (np.mean(scores), np.std(scores)))
+        print("")
         return 0
 
     def submission(self, testpath, wname):
@@ -204,5 +208,5 @@ if __name__ == '__main__':
     # x.train_model()
     x.kFoldValidation()
     # x.test_model('../iceberg_ship_classifier/' + x.run_weight_name)
-    x.submission('../iceberg_ship_classifier/data_test/test.json', '../iceberg_ship_classifier/' + x.run_weight_name)
+    # x.submission('../iceberg_ship_classifier/data_test/test.json', '../iceberg_ship_classifier/' + x.run_weight_name)
 
