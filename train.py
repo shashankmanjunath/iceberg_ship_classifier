@@ -101,8 +101,8 @@ class iceberg_model:
                                            epochs=500,
                                            steps_per_epoch=1,
                                            verbose=1,
-                                           validation_data=(valImg, valLabels))
-                                           # callbacks=[modelCheck, earlyStop, reduce])
+                                           validation_data=(valImg, valLabels),
+                                           callbacks=[modelCheck, earlyStop, reduce])
 
         # plt.figure()
         # plt.plot(history.history['acc'])
