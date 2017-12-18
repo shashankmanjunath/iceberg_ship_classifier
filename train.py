@@ -120,7 +120,6 @@ class iceberg_model:
         # plt.legend(['Train', 'Test'], loc='upper left')
         # plt.show()
 
-
     def test_model(self, wpath):
         print('Testing model...')
         if not self.dataLoader:
@@ -156,13 +155,17 @@ class iceberg_model:
         for train, test in kfold.split(valImg, valLabels):
             print('Run ' + str(count + 1) + ' out of ' + str(n_split))
             self.model.fit(valImg[train], valLabels[train],
-                           epochs=50,
+                           epochs=30,
+                           steps_per_epoch=1,
                            verbose=1,
                            callbacks=[earlyStop, reduce])
             scores = self.model.evaluate(valImg[train], valLabels[train])
             print("%s: %.2f%%" % (self.model.metrics_names[1], scores[1]*100))
             scores.append(scores[1] * 100)
             count += 1
+
+        for i in range(len(scores)):
+            print("Run %d: %.2f%% Accurate" % (i+1, scores[i]))
 
         print("%.2f%% (+/- %.2f%%)" % (np.mean(scores), np.std(scores)))
         return 0
