@@ -152,10 +152,18 @@ class iceberg_model:
         for train, test in kfold.split(trainImg, trainLabel):
             print('Run ' + str(count + 1) + ' out of ' + str(n_split))
             self.create_model()
-            self.model.fit(trainImg[train], trainLabel[train],
-                           epochs=100,
-                           verbose=1,
-                           callbacks=[earlyStop])
+
+            datagen = ImageDataGenerator(horizontal_flip=True,
+                                         vertical_flip=True,
+                                         width_shift_range=0.3,
+                                         height_shift_range=0.3,
+                                         zoom_range=0.1,
+                                         rotation_range=20)
+
+            self.model.fit_generator(datagen.flow(trainImg[train], trainLabel[train]),
+                                     epochs=50,
+                                     verbose=1,
+                                     callbacks=[earlyStop])
 
             scores = self.model.evaluate(trainImg[test], trainLabel[test])
             print(scores)
@@ -196,7 +204,7 @@ class iceberg_model:
 
 
 if __name__ == '__main__':
-    data_path = '../icebergClassifier/data_train/train.json'
+    data_path = '../iceberg_ship_classifier/data_train/train.json'
     x = iceberg_model(data_path)
     # x.train_model()
     x.kFoldValidation()
