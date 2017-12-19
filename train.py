@@ -162,6 +162,7 @@ class iceberg_model:
 
             self.model.fit_generator(datagen.flow(trainImg[train], trainLabel[train]),
                                      epochs=50,
+                                     steps_per_epoch=4,
                                      verbose=1,
                                      callbacks=[earlyStop])
 
