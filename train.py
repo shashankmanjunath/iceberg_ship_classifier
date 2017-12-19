@@ -33,14 +33,6 @@ class iceberg_model:
         self.model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
         self.model.add(Dropout(0.2))
 
-        # self.model.add(Conv2D(256, kernel_size=(3, 3), activation='relu'))
-        # self.model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
-        # self.model.add(Dropout(0.2))
-
-        # self.model.add(Conv2D(384, kernel_size=(3, 3), activation='relu'))
-        # self.model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
-        # self.model.add(Dropout(0.2))
-
         # Conv Layer 3
         self.model.add(Conv2D(128, kernel_size=(3, 3), activation='relu'))
         self.model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
@@ -96,20 +88,19 @@ class iceberg_model:
         #                verbose=1,
         #                validation_data=(valImg, valLabels),
         #                callbacks=[earlyStop, modelCheck])
+        #
+        # datagen = ImageDataGenerator(horizontal_flip=True,
+        #                              vertical_flip=True,
+        #                              width_shift_range=0.3,
+        #                              height_shift_range=0.3,
+        #                              zoom_range=0.1,
+        #                              rotation_range=20)
 
-        datagen = ImageDataGenerator(horizontal_flip=True,
-                                     vertical_flip=True,
-                                     width_shift_range=0.3,
-                                     height_shift_range=0.3,
-                                     zoom_range=0.1,
-                                     rotation_range=20)
-
-        history = self.model.fit_generator(datagen.flow(trainImg, trainLabels),
-                                           epochs=500,
-                                           steps_per_epoch=1,
-                                           verbose=1,
-                                           validation_data=(valImg, valLabels),
-                                           callbacks=[modelCheck, earlyStop])
+        history = self.model.fit(trainImg, trainLabels,
+                                 epochs=15,
+                                 verbose=1,
+                                 validation_data=(valImg, valLabels),
+                                 callbacks=[modelCheck, earlyStop])
 
         # plt.figure()
         # plt.plot(history.history['acc'])
@@ -143,7 +134,7 @@ class iceberg_model:
 
         trainImg, _, trainLabel, _ = self.dataLoader.train_test_more_images(self.train_test_split_val)
 
-        earlyStop = EarlyStopping(monitor='loss', patience=5, mode='min')
+        earlyStop = EarlyStopping(monitor='loss', patience=5, mode='auto')
         n_split = 10
         kfold = StratifiedKFold(n_splits=n_split, shuffle=True, random_state=seed)
         loss = []
@@ -154,8 +145,7 @@ class iceberg_model:
             self.create_model()
 
             self.model.fit(trainImg[train], trainLabel[train],
-                           epochs=50,
-                           steps_per_epoch=4,
+                           epochs=15,
                            verbose=1,
                            callbacks=[earlyStop])
 
@@ -174,7 +164,7 @@ class iceberg_model:
         print("")
         return 0
 
-    def submission(self, testpath, wname):
+    def submission(self, testpath):
         print('Generating submission...')
         testLoader = loader(testpath)
         testImg = np.zeros((len(testLoader.json_data), 75, 75, 3))
@@ -187,7 +177,7 @@ class iceberg_model:
         if not self.model:
             self.create_model()
 
-        self.model.load_weights(wname)
+        self.model.load_weights(self.run_weight_name)
 
         pred = self.model.predict(testImg, verbose=1)
 
@@ -200,8 +190,9 @@ class iceberg_model:
 if __name__ == '__main__':
     data_path = '../iceberg_ship_classifier/data_train/train.json'
     x = iceberg_model(data_path)
-    # x.train_model()
+    x.train_model()
+    print("")
     x.kFoldValidation()
     # x.test_model('../iceberg_ship_classifier/' + x.run_weight_name)
-    # x.submission('../iceberg_ship_classifier/data_test/test.json', '../iceberg_ship_classifier/' + x.run_weight_name)
+    x.submission('../iceberg_ship_classifier/data_test/test.json')
 
