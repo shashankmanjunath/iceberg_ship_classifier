@@ -141,10 +141,10 @@ class iceberg_model:
         if not self.dataLoader:
             self.dataLoader = loader(self.dataPath)
 
-        trainImg, _, trainLabel, _ = self.dataLoader.train_test_split(self.train_test_split_val)
+        trainImg, _, trainLabel, _ = self.dataLoader.train_test_more_images(self.train_test_split_val)
 
         earlyStop = EarlyStopping(monitor='loss', patience=5, mode='min')
-        n_split = 5
+        n_split = 10
         kfold = StratifiedKFold(n_splits=n_split, shuffle=True, random_state=seed)
         loss = []
         count = 0

@@ -42,11 +42,16 @@ class loader:
         return trainImg, valImg, trainLabel, valLabel
 
     def train_test_more_images(self, split_pct):
+        trainImg, valImg, trainLabel, valLabel = self.train_test_split(split_pct)
+        trainImg_more = get_more_images(trainImg)
+        valImg_more = get_more_images(valImg)
+        trainLabel_more = np.concatenate([trainLabel, trainLabel, trainLabel])
+        valLabel_more = np.concatenate([valLabel, valLabel, valLabel])
+        return trainImg_more, valImg_more, trainLabel_more, valLabel_more
 
 
 
 def get_more_images(imgs):
-    more_images = []
     vert_flip_imgs = []
     hori_flip_imgs = []
 
