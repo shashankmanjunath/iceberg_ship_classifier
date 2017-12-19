@@ -117,17 +117,17 @@ print("Loss: " + str(np.mean(loss)), str(np.std(loss)))
 print("")
 
 
-# gmodel = getModel()
-#
-# gmodel.fit(X_train_cv, y_train_cv,
-#           batch_size=24,
-#           epochs=50,
-#           verbose=1,
-#           validation_data=(X_valid, y_valid),
-#           callbacks=callbacks)
-#
-# gmodel.load_weights(filepath=file_path)
-# score = gmodel.evaluate(X_valid, y_valid, verbose=1)
-# print('Test loss:', score[0])
-# print('Test accuracy:', score[1])
+gmodel = getModel()
+
+gmodel.fit(X_train_cv, y_train_cv,
+          batch_size=24,
+          epochs=50,
+          verbose=1,
+          validation_data=(X_valid, y_valid),
+          callbacks=callbacks)
+
+gmodel.load_weights(filepath=file_path)
+score = gmodel.evaluate(X_valid, y_valid, verbose=1)
+print('Test loss:', score[0])
+print('Test accuracy:', score[1])
 

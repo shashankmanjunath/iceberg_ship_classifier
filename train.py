@@ -82,20 +82,6 @@ class iceberg_model:
 
         earlyStop, modelCheck = self.callbacks()
 
-        # self.model.fit(trainImg, trainLabels,
-        #                batch_size=24,
-        #                epochs=50,
-        #                verbose=1,
-        #                validation_data=(valImg, valLabels),
-        #                callbacks=[earlyStop, modelCheck])
-        #
-        # datagen = ImageDataGenerator(horizontal_flip=True,
-        #                              vertical_flip=True,
-        #                              width_shift_range=0.3,
-        #                              height_shift_range=0.3,
-        #                              zoom_range=0.1,
-        #                              rotation_range=20)
-
         history = self.model.fit(trainImg, trainLabels,
                                  epochs=15,
                                  verbose=1,
