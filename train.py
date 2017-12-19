@@ -5,7 +5,6 @@ from keras.models import Sequential
 from keras.layers import Conv2D, MaxPooling2D, Input, Dense, Flatten, Dropout, Activation
 from keras.optimizers import Adam
 from keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
-from keras.preprocessing.image import ImageDataGenerator
 from sklearn.model_selection import StratifiedKFold
 
 
@@ -19,7 +18,7 @@ class iceberg_model:
         self.dataLoader = []
         self.model = []
         self.train_test_split_val = 0.8
-        self.run_weight_name = 'model_weights_1218.hdf5'
+        self.run_weight_name = 'model_weights_1219.hdf5'
 
     def create_model(self):
         # Conv Layer 1
@@ -67,34 +66,31 @@ class iceberg_model:
                            metrics=['accuracy'])
 
     def callbacks(self):
-        stop = EarlyStopping(monitor='val_loss', patience=7, mode='min')
+        stop = EarlyStopping(monitor='val_loss', patience=5, mode='min')
         check = ModelCheckpoint(self.run_weight_name, save_best_only=True)
-        # reduce_lr_loss = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=10, verbose=1, epsilon=1e-4,
-        #                                    mode='min')
-        return stop, check
+        return [stop, check]
 
     def train_model(self):
         print('Training Model...')
         self.create_model()
 
         self.dataLoader = loader(self.dataPath)
-        trainImg, valImg, trainLabels, valLabels = self.dataLoader.train_test_split()
+        trainImg, valImg, trainLabels, valLabels = self.dataLoader.train_test_more_images()
 
-        earlyStop, modelCheck = self.callbacks()
 
         self.model.fit(trainImg, trainLabels,
                        batch_size=24,
                        epochs=50,
                        verbose=1,
                        validation_data=(valImg, valLabels),
-                       callbacks=[modelCheck, earlyStop])
+                       callbacks=self.callbacks())
 
     def test_model(self):
         print('Testing model...')
         if not self.dataLoader:
             self.dataLoader = loader(self.dataPath)
 
-        _, valImg, _, valLabels = self.dataLoader.train_test_split()
+        _, valImg, _, valLabels = self.dataLoader.train_test_more_images()
 
         if not self.model:
             self.create_model()
@@ -163,8 +159,6 @@ if __name__ == '__main__':
     # data_path = '../icebergClassifier/data_train/train.json'
     x = iceberg_model(data_path)
     x.train_model()
-    print("")
     x.kFoldValidation()
-    # x.test_model('../iceberg_ship_classifier/' + x.run_weight_name)
     x.submission('../iceberg_ship_classifier/data_test/test.json')
 

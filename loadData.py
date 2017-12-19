@@ -16,6 +16,7 @@ class loader:
         self.X_train = np.concatenate([self.X_band_1[:, :, :, np.newaxis], self.X_band_2[:, :, :, np.newaxis],
                                      ((self.X_band_1 + self.X_band_2) / 2)[:, :, :, np.newaxis]], axis=-1)
         self.id = self.json_data['id']
+
         if 'is_iceberg' in self.json_data.keys():
             self.labels = self.json_data['is_iceberg']
 
