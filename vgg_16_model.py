@@ -131,7 +131,6 @@ def myAngleCV(X_train, X_angle, X_test):
             gen_flow,
             steps_per_epoch=24,
             epochs=100,
-            shuffle=True,
             verbose=1,
             validation_data=([X_holdout, X_angle_hold], Y_holdout),
             callbacks=callbacks)
@@ -168,3 +167,10 @@ def myAngleCV(X_train, X_angle, X_test):
 
 
 preds = myAngleCV(X_train, X_angle, X_test)
+
+
+#Submission for each day.
+submission = pd.DataFrame()
+submission['id']=test['id']
+submission['is_iceberg']=preds
+submission.to_csv('sub_vgg16_1219.csv', index=False)

@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import StratifiedKFold
+import cv2
 
 #Load the data.
 train = pd.read_json("../iceberg_ship_classifier/data_train/train.json")
@@ -77,10 +78,6 @@ def getModel():
                   optimizer=mypotim,
                   metrics=['accuracy'])
     return gmodel
-
-
-def vgg_16():
-    input = Input(shape=(75, 75, 3))
 
 
 def get_callbacks(filepath, patience):
