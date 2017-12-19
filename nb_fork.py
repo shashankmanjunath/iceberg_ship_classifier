@@ -83,6 +83,42 @@ def get_callbacks(filepath, patience):
     msave = ModelCheckpoint(filepath, save_best_only=True)
     return [es, msave]
 
+
+def get_more_images(imgs):
+    vert_flip_imgs = []
+    hori_flip_imgs = []
+
+    for i in range(0, imgs.shape[0]):
+        a = imgs[i, :, :, 0]
+        b = imgs[i, :, :, 1]
+        c = imgs[i, :, :, 2]
+
+        av = cv2.flip(a, 1)
+        ah = cv2.flip(a, 0)
+        bv = cv2.flip(b, 1)
+        bh = cv2.flip(b, 0)
+        cv = cv2.flip(c, 1)
+        ch = cv2.flip(c, 0)
+
+        vert_flip_imgs.append(np.dstack((av, bv, cv)))
+        hori_flip_imgs.append(np.dstack((ah, bh, ch)))
+
+    v = np.array(vert_flip_imgs)
+    h = np.array(hori_flip_imgs)
+
+    more_images = np.concatenate((imgs, v, h))
+
+    return more_images
+
+
+def train_test_more_images(split_pct):
+    trainImg, valImg, trainLabel, valLabel = train_test_split(split_pct)
+    trainImg_more = get_more_images(trainImg)
+    valImg_more = get_more_images(valImg)
+    trainLabel_more = np.concatenate([trainLabel, trainLabel, trainLabel])
+    valLabel_more = np.concatenate([valLabel, valLabel, valLabel])
+    return trainImg_more, valImg_more, trainLabel_more, valLabel_more
+
 file_path = "fork_nb_weights.hdf5"
 callbacks = get_callbacks(filepath=file_path, patience=5)
 
@@ -90,11 +126,19 @@ callbacks = get_callbacks(filepath=file_path, patience=5)
 target_train=train['is_iceberg']
 X_train_cv, X_valid, y_train_cv, y_valid = train_test_split(X_train, target_train, random_state=1, train_size=0.75)
 
+X_train_cv = get_more_images(X_train_cv)
+X_valid = get_more_images(X_valid)
+
+y_train_cv = np.concatenate([y_train_cv, y_train_cv, y_train_cv])
+y_valid = np.concatenate([y_valid, y_valid, y_valid])
+
+
 print('Validating Model...')
 n_split = 10
 kfold = StratifiedKFold(n_splits=n_split, shuffle=True)
 loss = []
 count = 0
+
 
 for train_k, test_k in kfold.split(X_train_cv, y_train_cv):
     print('Run ' + str(count + 1) + ' out of ' + str(n_split))
@@ -138,7 +182,6 @@ X_band_test_1 = np.array([np.array(band).astype(np.float32).reshape(75, 75) for 
 X_band_test_2 = np.array([np.array(band).astype(np.float32).reshape(75, 75) for band in test["band_2"]])
 X_test = np.concatenate([X_band_test_1[:, :, :, np.newaxis], X_band_test_2[:, :, :, np.newaxis],
                          ((X_band_test_1+X_band_test_2)/2)[:, :, :, np.newaxis]], axis=-1)
-print(X_band_test_1)
 predicted_test=gmodel.predict_proba(X_test)
 
 submission = pd.DataFrame()
