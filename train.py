@@ -123,9 +123,9 @@ class iceberg_model:
             self.create_model()
 
             self.model.fit(trainImg[train_k], trainLabel[train_k],
-                           epochs=15,
-                           verbose=1,
-                           validataion_data=(valImg, valLabel))
+                           epochs=50,
+                           validataion_data=(valImg, valLabel),
+                           verbose=1)
 
             scores = self.model.evaluate(trainImg[test_k], trainLabel[test_k])
             print(scores)
