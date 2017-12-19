@@ -9,6 +9,7 @@ from sklearn.model_selection import StratifiedKFold
 train = pd.read_json("../iceberg_ship_classifier/data_train/train.json")
 # train = pd.read_json("../icebergClassifier/data_train/train.json")
 test = pd.read_json("../iceberg_ship_classifier/data_test/test.json")
+# test = pd.read_json("../icebergClassifier/data_test/test.json")
 
 #Generate the training data
 #Create 3 bands having HH, HV and avg of both
@@ -94,17 +95,15 @@ n_split = 10
 kfold = StratifiedKFold(n_splits=n_split, shuffle=True)
 loss = []
 count = 0
-es2 = EarlyStopping('loss', patience=5, mode="min")
 
 
 for train, test in kfold.split(X_train_cv, y_train_cv):
     print('Run ' + str(count + 1) + ' out of ' + str(n_split))
     gmodel = getModel()
     gmodel.fit(X_train_cv[train], y_train_cv[train],
-               epochs=50,
+               epochs=25,
                batch_size=24,
-               verbose=1,
-               callbacks=[es2])
+               verbose=1)
 
     scores = gmodel.evaluate(X_train_cv[test], y_train_cv[test])
     loss.append(scores[0])
@@ -134,11 +133,11 @@ score = gmodel.evaluate(X_valid, y_valid, verbose=1)
 print('Test loss:', score[0])
 print('Test accuracy:', score[1])
 
-X_band_test_1=np.array([np.array(band).astype(np.float32).reshape(75, 75) for band in test["band_1"]])
-X_band_test_2=np.array([np.array(band).astype(np.float32).reshape(75, 75) for band in test["band_2"]])
-X_test = np.concatenate([X_band_test_1[:, :, :, np.newaxis]
-                          , X_band_test_2[:, :, :, np.newaxis]
-                         , ((X_band_test_1+X_band_test_2)/2)[:, :, :, np.newaxis]], axis=-1)
+X_band_test_1 = np.array([np.array(band).astype(np.float32).reshape(75, 75) for band in test["band_1"]])
+X_band_test_2 = np.array([np.array(band).astype(np.float32).reshape(75, 75) for band in test["band_2"]])
+X_test = np.concatenate([X_band_test_1[:, :, :, np.newaxis], X_band_test_2[:, :, :, np.newaxis],
+                         ((X_band_test_1+X_band_test_2)/2)[:, :, :, np.newaxis]], axis=-1)
+print(X_band_test_1)
 predicted_test=gmodel.predict_proba(X_test)
 
 submission = pd.DataFrame()
