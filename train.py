@@ -153,18 +153,11 @@ class iceberg_model:
             print('Run ' + str(count + 1) + ' out of ' + str(n_split))
             self.create_model()
 
-            datagen = ImageDataGenerator(horizontal_flip=True,
-                                         vertical_flip=True,
-                                         width_shift_range=0.3,
-                                         height_shift_range=0.3,
-                                         zoom_range=0.1,
-                                         rotation_range=20)
-
-            self.model.fit_generator(datagen.flow(trainImg[train], trainLabel[train]),
-                                     epochs=50,
-                                     steps_per_epoch=4,
-                                     verbose=1,
-                                     callbacks=[earlyStop])
+            self.model.fit(trainImg[train], trainLabel[train],
+                           epochs=50,
+                           steps_per_epoch=4,
+                           verbose=1,
+                           callbacks=[earlyStop])
 
             scores = self.model.evaluate(trainImg[test], trainLabel[test])
             print(scores)
