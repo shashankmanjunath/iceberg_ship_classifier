@@ -96,16 +96,17 @@ kfold = StratifiedKFold(n_splits=n_split, shuffle=True)
 loss = []
 count = 0
 
-for train, test in kfold.split(X_train_cv, y_train_cv):
+for train_k, test_k in kfold.split(X_train_cv, y_train_cv):
     print('Run ' + str(count + 1) + ' out of ' + str(n_split))
+
     gmodel = getModel()
 
-    gmodel.fit(X_train_cv, y_train_cv,
+    gmodel.fit(X_train_cv[train_k], y_train_cv[train_k],
                epochs=25,
                validation_data=(X_valid, y_valid),
                verbose=1)
 
-    scores = gmodel.evaluate(X_train_cv[test], y_train_cv[test])
+    scores = gmodel.evaluate(X_train_cv[test_k], y_train_cv[test_k])
     loss.append(scores[0])
     count += 1
 
