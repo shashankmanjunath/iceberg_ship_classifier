@@ -94,6 +94,8 @@ n_split = 10
 kfold = StratifiedKFold(n_splits=n_split, shuffle=True)
 loss = []
 count = 0
+es2 = EarlyStopping('loss', patience=5, mode="min")
+
 
 for train, test in kfold.split(X_train_cv, y_train_cv):
     print('Run ' + str(count + 1) + ' out of ' + str(n_split))
@@ -102,7 +104,7 @@ for train, test in kfold.split(X_train_cv, y_train_cv):
                epochs=50,
                batch_size=24,
                verbose=1,
-               callbacks=callbacks)
+               callbacks=[es2])
 
     scores = gmodel.evaluate(X_train_cv[test], y_train_cv[test])
     loss.append(scores[0])
