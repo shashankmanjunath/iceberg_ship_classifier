@@ -13,8 +13,8 @@ test = pd.read_json("../iceberg_ship_classifier/data_test/test.json")
 
 #Generate the training data
 #Create 3 bands having HH, HV and avg of both
-X_band_1=np.array([np.array(band).astype(np.float32).reshape(75, 75) for band in train["band_1"]])
-X_band_2=np.array([np.array(band).astype(np.float32).reshape(75, 75) for band in train["band_2"]])
+X_band_1 = np.array([np.array(band).astype(np.float32).reshape(75, 75) for band in train["band_1"]])
+X_band_2 = np.array([np.array(band).astype(np.float32).reshape(75, 75) for band in train["band_2"]])
 X_train = np.concatenate([X_band_1[:, :, :, np.newaxis], X_band_2[:, :, :, np.newaxis],((X_band_1+X_band_2)/2)[:, :, :, np.newaxis]], axis=-1)
 
 #Import Keras.
@@ -96,13 +96,13 @@ kfold = StratifiedKFold(n_splits=n_split, shuffle=True)
 loss = []
 count = 0
 
-
 for train, test in kfold.split(X_train_cv, y_train_cv):
     print('Run ' + str(count + 1) + ' out of ' + str(n_split))
     gmodel = getModel()
-    gmodel.fit(X_train_cv[train], y_train_cv[train],
+
+    gmodel.fit(X_train_cv, y_train_cv,
                epochs=25,
-               batch_size=24,
+               validation_data=(X_valid, y_valid),
                verbose=1)
 
     scores = gmodel.evaluate(X_train_cv[test], y_train_cv[test])
