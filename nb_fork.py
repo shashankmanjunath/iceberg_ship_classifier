@@ -97,15 +97,15 @@ loss = []
 count = 0
 
 
-for train, test in kfold.split(X_train_cv, y_train_cv):
+for train, test in kfold.split(X_train_cv, X_valid):
     print('Run ' + str(count + 1) + ' out of ' + str(n_split))
     gmodel = getModel()
-    gmodel.fit(X_train_cv[train], y_train_cv[train],
+    gmodel.fit(X_train_cv[train], X_valid[train],
                epochs=25,
                batch_size=24,
                verbose=1)
 
-    scores = gmodel.evaluate(X_train_cv[test], y_train_cv[test])
+    scores = gmodel.evaluate(X_train_cv[test], X_valid[test])
     loss.append(scores[0])
     count += 1
 
