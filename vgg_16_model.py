@@ -4,7 +4,6 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import log_loss
 from sklearn.model_selection import StratifiedKFold, StratifiedShuffleSplit
-from os.path import join as opj
 
 train = pd.read_json("../iceberg_ship_classifier/data_train/train.json")
 target_train=train['is_iceberg']
@@ -35,30 +34,16 @@ X_test = np.concatenate([X_band_test_1[:, :, :, np.newaxis]
                             , X_band_test_3[:, :, :, np.newaxis]], axis=-1)
 
 # Import Keras.
-from keras.optimizers import RMSprop
-from keras.preprocessing.image import ImageDataGenerator
-from keras.models import Sequential
 from keras.layers import Conv2D, MaxPooling2D, Dense, Dropout, Input, Flatten, Activation
 from keras.layers import GlobalMaxPooling2D
-from keras.layers.normalization import BatchNormalization
-from keras.layers.merge import Concatenate
+
 from keras.models import Model
-from keras import initializers
-from keras.optimizers import Adam
-from keras.optimizers import rmsprop
-from keras.layers.advanced_activations import LeakyReLU, PReLU
+
 from keras.optimizers import SGD
 from keras.callbacks import ModelCheckpoint, Callback, EarlyStopping
 
-from keras.datasets import cifar10
-from keras.applications.inception_v3 import InceptionV3
 from keras.applications.vgg16 import VGG16
-from keras.applications.xception import Xception
-from keras.applications.mobilenet import MobileNet
-from keras.applications.vgg19 import VGG19
 from keras.layers import Concatenate, Dense, LSTM, Input, concatenate
-from keras.preprocessing import image
-from keras.applications.vgg16 import preprocess_input
 
 # Data Aug for multi-input
 from keras.preprocessing.image import ImageDataGenerator
