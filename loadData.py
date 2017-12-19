@@ -5,7 +5,8 @@ import cv2
 # import matplotlib.pyplot as plt
 
 class loader:
-    def __init__(self, data_path):
+    def __init__(self, data_path, split_pct=0.2):
+        self.split_pct = split_pct
         self.data_path = data_path
         self.json_data = pd.read_json(data_path)
         self.X_band_1 = np.asarray([np.array(img).astype(np.float32).reshape(75, 75) for img
@@ -18,37 +19,24 @@ class loader:
         if 'is_iceberg' in self.json_data.keys():
             self.labels = self.json_data['is_iceberg']
 
-    def load_data(self):
-        target_train = self.json_data['is_iceberg']
-        for i in range(len(self.json_data)):
-            self.band_1[:, :, i] = np.asarray(self.json_data['band_1'][i]).reshape((75, 75))
-            self.band_2[:, :, i] = np.asarray(self.json_data['band_2'][i]).reshape((75, 75))
-            self.id += [self.json_data['id'][i]]
-
-            if 'is_iceberg' in self.json_data.keys():
-                self.labels += [self.json_data['is_iceberg'][i]]
-
-    def train_test_split(self, split_pct):
-        imgStack = np.zeros((len(self.labels), 75, 75, 3))
-        for i in range(len(self.labels)):
-            imgStack[i, :, :, 0] = self.band_1_norm[:, :, i]
-            imgStack[i, :, :, 1] = self.band_2_norm[:, :, i]
-            imgStack[i, :, :, 2] = self.band_3_norm[:, :, i]
-
-        trainImg, valImg, trainLabel, valLabel = train_test_split(imgStack, self.labels, random_state=1,
-                                                                  train_size=split_pct)
+    def train_test_split(self):
+        trainImg, valImg, trainLabel, valLabel = train_test_split(self.X_train, self.labels, random_state=1,
+                                                                  train_size=self.split_pct)
         trainLabel = np.asarray(trainLabel)
         valLabel = np.asarray(valLabel)
+
         return trainImg, valImg, trainLabel, valLabel
 
-    def train_test_more_images(self, split_pct):
-        trainImg, valImg, trainLabel, valLabel = self.train_test_split(split_pct)
+    def train_test_more_images(self):
+        trainImg, valImg, trainLabel, valLabel = self.train_test_split()
+
         trainImg_more = get_more_images(trainImg)
         valImg_more = get_more_images(valImg)
+
         trainLabel_more = np.concatenate([trainLabel, trainLabel, trainLabel])
         valLabel_more = np.concatenate([valLabel, valLabel, valLabel])
-        return trainImg_more, valImg_more, trainLabel_more, valLabel_more
 
+        return trainImg_more, valImg_more, trainLabel_more, valLabel_more
 
 
 def get_more_images(imgs):

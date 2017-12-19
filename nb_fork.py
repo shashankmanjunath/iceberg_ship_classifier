@@ -184,7 +184,7 @@ X_band_test_1 = np.array([np.array(band).astype(np.float32).reshape(75, 75) for 
 X_band_test_2 = np.array([np.array(band).astype(np.float32).reshape(75, 75) for band in test["band_2"]])
 X_test = np.concatenate([X_band_test_1[:, :, :, np.newaxis], X_band_test_2[:, :, :, np.newaxis],
                          ((X_band_test_1+X_band_test_2)/2)[:, :, :, np.newaxis]], axis=-1)
-predicted_test=gmodel.predict_proba(X_test)
+predicted_test = gmodel.predict_proba(X_test)
 
 submission = pd.DataFrame()
 submission['id']=test['id']

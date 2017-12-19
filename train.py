@@ -67,7 +67,7 @@ class iceberg_model:
                            metrics=['accuracy'])
 
     def callbacks(self):
-        stop = EarlyStopping(monitor='val_loss', patience=100, mode='min')
+        stop = EarlyStopping(monitor='val_loss', patience=7, mode='min')
         check = ModelCheckpoint(self.run_weight_name, save_best_only=True)
         # reduce_lr_loss = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=10, verbose=1, epsilon=1e-4,
         #                                    mode='min')
@@ -78,35 +78,28 @@ class iceberg_model:
         self.create_model()
 
         self.dataLoader = loader(self.dataPath)
-        trainImg, valImg, trainLabels, valLabels = self.dataLoader.train_test_split(self.train_test_split_val)
+        trainImg, valImg, trainLabels, valLabels = self.dataLoader.train_test_split()
 
         earlyStop, modelCheck = self.callbacks()
 
-        history = self.model.fit(trainImg, trainLabels,
-                                 epochs=15,
-                                 verbose=1,
-                                 validation_data=(valImg, valLabels),
-                                 callbacks=[modelCheck, earlyStop])
+        self.model.fit(trainImg, trainLabels,
+                       batch_size=24,
+                       epochs=50,
+                       verbose=1,
+                       validation_data=(valImg, valLabels),
+                       callbacks=[modelCheck, earlyStop])
 
-        # plt.figure()
-        # plt.plot(history.history['acc'])
-        # plt.plot(history.history['val_acc'])
-        # plt.title('Model Accuracy')
-        # plt.xlabel('Epoch')
-        # plt.ylabel('Accuracy')
-        # plt.legend(['Train', 'Test'], loc='upper left')
-        # plt.show()
-
-    def test_model(self, wpath):
+    def test_model(self):
         print('Testing model...')
         if not self.dataLoader:
             self.dataLoader = loader(self.dataPath)
-        _, valImg, _, valLabels = self.dataLoader.train_test_split(self.train_test_split_val)
+
+        _, valImg, _, valLabels = self.dataLoader.train_test_split()
 
         if not self.model:
             self.create_model()
 
-        self.model.load_weights(filepath=wpath)
+        self.model.load_weights(self.run_weight_name)
         score = self.model.evaluate(valImg, valLabels, verbose=1)
         print('Test loss: ', score[0])
         print('Test accuracy: ', score[1])
@@ -118,24 +111,23 @@ class iceberg_model:
         if not self.dataLoader:
             self.dataLoader = loader(self.dataPath)
 
-        trainImg, _, trainLabel, _ = self.dataLoader.train_test_more_images(self.train_test_split_val)
+        trainImg, valImg, trainLabel, valLabel = self.dataLoader.train_test_more_images()
 
-        earlyStop = EarlyStopping(monitor='loss', patience=5, mode='auto')
         n_split = 10
-        kfold = StratifiedKFold(n_splits=n_split, shuffle=True, random_state=seed)
+        kfold = StratifiedKFold(n_splits=n_split, shuffle=True)
         loss = []
         count = 0
 
-        for train, test in kfold.split(trainImg, trainLabel):
+        for train_k, test_k in kfold.split(trainImg, trainLabel):
             print('Run ' + str(count + 1) + ' out of ' + str(n_split))
             self.create_model()
 
-            self.model.fit(trainImg[train], trainLabel[train],
+            self.model.fit(trainImg[train_k], trainLabel[train_k],
                            epochs=15,
                            verbose=1,
-                           callbacks=[earlyStop])
+                           validataion_data=(valImg, valLabel))
 
-            scores = self.model.evaluate(trainImg[test], trainLabel[test])
+            scores = self.model.evaluate(trainImg[test_k], trainLabel[test_k])
             print(scores)
             loss.append(scores[0])
             count += 1
@@ -153,19 +145,13 @@ class iceberg_model:
     def submission(self, testpath):
         print('Generating submission...')
         testLoader = loader(testpath)
-        testImg = np.zeros((len(testLoader.json_data), 75, 75, 3))
-
-        for i in range(len(testLoader.json_data)):
-            testImg[i, :, :, 0] = testLoader.band_1_norm[:, :, i]
-            testImg[i, :, :, 1] = testLoader.band_2_norm[:, :, i]
-            testImg[i, :, :, 2] = testLoader.band_3_norm[:, :, i]
 
         if not self.model:
             self.create_model()
 
         self.model.load_weights(self.run_weight_name)
 
-        pred = self.model.predict(testImg, verbose=1)
+        pred = self.model.predict_proba(testLoader.X_train)
 
         submission = pd.DataFrame()
         submission['id'] = testLoader.id
@@ -175,6 +161,7 @@ class iceberg_model:
 
 if __name__ == '__main__':
     data_path = '../iceberg_ship_classifier/data_train/train.json'
+    # data_path = '../icebergClassifier/data_train/train.json'
     x = iceberg_model(data_path)
     x.train_model()
     print("")
