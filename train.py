@@ -12,7 +12,9 @@ from keras.applications.vgg16 import VGG16
 class iceberg_model:
     def __init__(self, dataPath):
         self.dataPath = dataPath
-        self.dataLoader = []
+        self.dataLoader = loader(self.dataPath)
+        self.dataLoader.clean_inc_angle()
+
         self.model = []
         self.train_test_split_val = 0.8
         self.run_weight_name = 'model_weights_1219.hdf5'
@@ -63,8 +65,6 @@ class iceberg_model:
                            metrics=['accuracy'])
 
     def vgg_model(self):
-        if not self.dataLoader:
-            self.dataLoader = loader(data_path=self.dataPath)
         trainImg, valImg, trainLabels, valLabels = self.dataLoader.train_test_more_images()
 
         base_model = VGG16(weights='imagenet', include_top=False,
@@ -95,8 +95,6 @@ class iceberg_model:
     def train_model(self):
         print('Training Model...')
         self.create_model()
-
-        self.dataLoader = loader(data_path=self.dataPath)
         trainImg, valImg, trainLabels, valLabels = self.dataLoader.train_test_more_images()
 
 
@@ -108,8 +106,6 @@ class iceberg_model:
 
     def test_model(self):
         print('Testing model...')
-        if not self.dataLoader:
-            self.dataLoader = loader(data_path=self.dataPath)
 
         _, valImg, _, valLabels = self.dataLoader.train_test_more_images()
 
@@ -125,8 +121,6 @@ class iceberg_model:
 
     def kFoldValidation(self):
         print('Validating Model...')
-        if not self.dataLoader:
-            self.dataLoader = loader(data_path=self.dataPath)
 
         trainImg, valImg, trainLabel, valLabel = self.dataLoader.train_test_more_images()
 
@@ -137,7 +131,7 @@ class iceberg_model:
 
         for train_k, test_k in kfold.split(trainImg, trainLabel):
             print('Run ' + str(count + 1) + ' out of ' + str(n_split))
-            self.vgg_model()
+            self.create_model()
 
             self.model.fit(trainImg[train_k], trainLabel[train_k],
                            epochs=100,
@@ -178,8 +172,8 @@ class iceberg_model:
 
 
 if __name__ == '__main__':
-    data_path = '../iceberg_ship_classifier/data_train/train.json'
-    # data_path = '../icebergClassifier/data_train/train.json'
+    # data_path = '../iceberg_ship_classifier/data_train/train.json'
+    data_path = '../icebergClassifier/data_train/train.json'
     x = iceberg_model(data_path)
     # x.train_model()
     # x.test_model()

@@ -16,9 +16,16 @@ class loader:
         self.X_train = np.concatenate([self.X_band_1[:, :, :, np.newaxis], self.X_band_2[:, :, :, np.newaxis],
                                      ((self.X_band_1 + self.X_band_2) / 2)[:, :, :, np.newaxis]], axis=-1)
         self.id = self.json_data['id']
+        self.inc_angle = self.json_data['inc_angle'].replace('na', 0)
 
         if 'is_iceberg' in self.json_data.keys():
             self.labels = self.json_data['is_iceberg']
+
+    def clean_inc_angle(self):
+        ind = np.where(self.inc_angle > 0)
+        self.X_train = self.X_train[ind[0]]
+        if 'is_iceberg' in self.json_data.keys():
+            self.labels = self.labels[ind[0]]
 
     def train_test_split(self):
         trainImg, valImg, trainLabel, valLabel = train_test_split(self.X_train, self.labels, random_state=1,
