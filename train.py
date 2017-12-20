@@ -87,7 +87,7 @@ class iceberg_model:
                            metrics=['accuracy'])
 
     def callbacks(self):
-        stop = EarlyStopping("val_loss", patience=5, mode="min")
+        stop = EarlyStopping("val_loss", patience=10, mode="min")
         check = ModelCheckpoint(self.run_weight_name, save_best_only=True)
         return [stop, check]
 
@@ -141,7 +141,8 @@ class iceberg_model:
             self.model.fit(trainImg[train_k], trainLabel[train_k],
                            epochs=50,
                            validation_data=(valImg, valLabel),
-                           verbose=1)
+                           verbose=1,
+                           callbacks=self.callbacks())
 
             scores = self.model.evaluate(trainImg[test_k], trainLabel[test_k])
             print(scores)
