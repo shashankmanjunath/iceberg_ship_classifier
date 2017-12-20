@@ -29,10 +29,11 @@ class iceberg_model:
                                       rotation_range=10)
 
     def vgg_model(self):
+        X_train = self.dataLoader.
         input_2 = Input(shape=[1], name="angle")
         angle_layer = Dense(1, )(input_2)
         base_model = VGG16(weights='imagenet', include_top=False,
-                           input_shape=(75, 75, 3), classes=1)
+                           input_shape=self.dataLoader.X_train.shape[1:], classes=1)
         x = base_model.get_layer('block5_pool').output
 
         x = GlobalMaxPooling2D()(x)
@@ -78,7 +79,7 @@ class iceberg_model:
 
         for train_k, test_k in kfold.split(trainImg, trainLabel):
             print('Run ' + str(count + 1) + ' out of ' + str(n_split))
-            self.create_model()
+            self.vgg_model()
 
             self.model.fit_generator(self.gen_flow(trainImg[train_k],
                                                    self.dataLoader.inc_angle[train_k],
@@ -106,8 +107,8 @@ class iceberg_model:
 
 
 if __name__ == '__main__':
-    # data_path = '../iceberg_ship_classifier/data_train/train.json'
-    data_path = '../icebergClassifier/data_train/train.json'
+    data_path = '../iceberg_ship_classifier/data_train/train.json'
+    # data_path = '../icebergClassifier/data_train/train.json'
     x = iceberg_model(data_path)
     # x.train_model()
     # x.test_model()
