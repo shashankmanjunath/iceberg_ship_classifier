@@ -81,8 +81,8 @@ class iceberg_model:
 
         self.model = Model(input=[base_model.input], output=predictions)
 
-        # sgd = SGD(lr=1e-3, decay=1e-6, momentum=0.9, nesterov=True)
-        opt = Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.0)
+        opt = SGD(lr=1e-3, decay=1e-6, momentum=0.9, nesterov=True)
+        # opt = Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.0)
         self.model.compile(loss='binary_crossentropy',
                            optimizer=opt,
                            metrics=['accuracy'])
