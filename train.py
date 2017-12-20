@@ -8,10 +8,6 @@ from keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
 from sklearn.model_selection import StratifiedKFold
 
 
-seed = 1337
-np.random.seed(seed)
-
-
 class iceberg_model:
     def __init__(self, dataPath):
         self.dataPath = dataPath
@@ -66,7 +62,7 @@ class iceberg_model:
                            metrics=['accuracy'])
 
     def callbacks(self):
-        stop = EarlyStopping(monitor='val_loss', patience=5, mode='min')
+        stop = EarlyStopping("val_loss", patience=5, mode="min")
         check = ModelCheckpoint(self.run_weight_name, save_best_only=True)
         return [stop, check]
 
@@ -74,7 +70,7 @@ class iceberg_model:
         print('Training Model...')
         self.create_model()
 
-        self.dataLoader = loader(self.dataPath)
+        self.dataLoader = loader(data_path=self.dataPath)
         trainImg, valImg, trainLabels, valLabels = self.dataLoader.train_test_more_images()
 
 
@@ -88,7 +84,7 @@ class iceberg_model:
     def test_model(self):
         print('Testing model...')
         if not self.dataLoader:
-            self.dataLoader = loader(self.dataPath)
+            self.dataLoader = loader(data_path=self.dataPath)
 
         _, valImg, _, valLabels = self.dataLoader.train_test_more_images()
 
@@ -105,7 +101,7 @@ class iceberg_model:
     def kFoldValidation(self):
         print('Validating Model...')
         if not self.dataLoader:
-            self.dataLoader = loader(self.dataPath)
+            self.dataLoader = loader(data_path=self.dataPath)
 
         trainImg, valImg, trainLabel, valLabel = self.dataLoader.train_test_more_images()
 
@@ -120,6 +116,7 @@ class iceberg_model:
 
             self.model.fit(trainImg[train_k], trainLabel[train_k],
                            epochs=50,
+                           validation_data=(valImg, valLabel),
                            verbose=1)
 
             scores = self.model.evaluate(trainImg[test_k], trainLabel[test_k])
@@ -158,7 +155,7 @@ if __name__ == '__main__':
     data_path = '../iceberg_ship_classifier/data_train/train.json'
     # data_path = '../icebergClassifier/data_train/train.json'
     x = iceberg_model(data_path)
-    x.train_model()
+    # x.train_model()
     x.kFoldValidation()
-    x.submission('../iceberg_ship_classifier/data_test/test.json')
+    # x.submission('../iceberg_ship_classifier/data_test/test.json')
 

@@ -106,14 +106,6 @@ def get_more_images(imgs):
     return more_images
 
 
-def train_test_more_images(split_pct):
-    trainImg, valImg, trainLabel, valLabel = train_test_split(split_pct)
-    trainImg_more = get_more_images(trainImg)
-    valImg_more = get_more_images(valImg)
-    trainLabel_more = np.concatenate([trainLabel, trainLabel, trainLabel])
-    valLabel_more = np.concatenate([valLabel, valLabel, valLabel])
-    return trainImg_more, valImg_more, trainLabel_more, valLabel_more
-
 file_path = "fork_nb_weights.hdf5"
 callbacks = get_callbacks(filepath=file_path, patience=5)
 
@@ -159,27 +151,27 @@ print("Loss: " + str(np.mean(loss)), str(np.std(loss)))
 print("")
 
 
-gmodel = getModel()
-
-gmodel.fit(X_train_cv, y_train_cv,
-          batch_size=24,
-          epochs=50,
-          verbose=1,
-          validation_data=(X_valid, y_valid),
-          callbacks=callbacks)
-
-gmodel.load_weights(filepath=file_path)
-score = gmodel.evaluate(X_valid, y_valid, verbose=1)
-print('Test loss:', score[0])
-print('Test accuracy:', score[1])
-
-X_band_test_1 = np.array([np.array(band).astype(np.float32).reshape(75, 75) for band in test["band_1"]])
-X_band_test_2 = np.array([np.array(band).astype(np.float32).reshape(75, 75) for band in test["band_2"]])
-X_test = np.concatenate([X_band_test_1[:, :, :, np.newaxis], X_band_test_2[:, :, :, np.newaxis],
-                         ((X_band_test_1+X_band_test_2)/2)[:, :, :, np.newaxis]], axis=-1)
-predicted_test = gmodel.predict_proba(X_test)
-
-submission = pd.DataFrame()
-submission['id']=test['id']
-submission['is_iceberg']=predicted_test.reshape((predicted_test.shape[0]))
-submission.to_csv('sub.csv', index=False)
+# gmodel = getModel()
+#
+# gmodel.fit(X_train_cv, y_train_cv,
+#           batch_size=24,
+#           epochs=50,
+#           verbose=1,
+#           validation_data=(X_valid, y_valid),
+#           callbacks=callbacks)
+#
+# gmodel.load_weights(filepath=file_path)
+# score = gmodel.evaluate(X_valid, y_valid, verbose=1)
+# print('Test loss:', score[0])
+# print('Test accuracy:', score[1])
+#
+# X_band_test_1 = np.array([np.array(band).astype(np.float32).reshape(75, 75) for band in test["band_1"]])
+# X_band_test_2 = np.array([np.array(band).astype(np.float32).reshape(75, 75) for band in test["band_2"]])
+# X_test = np.concatenate([X_band_test_1[:, :, :, np.newaxis], X_band_test_2[:, :, :, np.newaxis],
+#                          ((X_band_test_1+X_band_test_2)/2)[:, :, :, np.newaxis]], axis=-1)
+# predicted_test = gmodel.predict_proba(X_test)
+#
+# submission = pd.DataFrame()
+# submission['id']=test['id']
+# submission['is_iceberg']=predicted_test.reshape((predicted_test.shape[0]))
+# submission.to_csv('sub.csv', index=False)

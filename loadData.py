@@ -5,7 +5,7 @@ import cv2
 # import matplotlib.pyplot as plt
 
 class loader:
-    def __init__(self, data_path, split_pct=0.2):
+    def __init__(self, data_path, split_pct=0.75):
         self.split_pct = split_pct
         self.data_path = data_path
         self.json_data = pd.read_json(data_path)
@@ -23,9 +23,6 @@ class loader:
     def train_test_split(self):
         trainImg, valImg, trainLabel, valLabel = train_test_split(self.X_train, self.labels, random_state=1,
                                                                   train_size=self.split_pct)
-        trainLabel = np.asarray(trainLabel)
-        valLabel = np.asarray(valLabel)
-
         return trainImg, valImg, trainLabel, valLabel
 
     def train_test_more_images(self):
