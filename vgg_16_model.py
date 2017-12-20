@@ -111,6 +111,7 @@ def myAngleCV(X_train, X_angle, X_test):
     y_test_pred_log = 0
     y_train_pred_log = 0
     y_valid_pred_log = 0.0 * target_train
+
     for j, (train_idx, test_idx) in enumerate(folds):
         print('\n===================FOLD=', j)
         X_train_cv = X_train[train_idx]
@@ -171,6 +172,6 @@ preds = myAngleCV(X_train, X_angle, X_test)
 
 #Submission for each day.
 submission = pd.DataFrame()
-submission['id']=test['id']
-submission['is_iceberg']=preds
-submission.to_csv('sub_vgg16_1219.csv', index=False)
+submission['id'] = test['id']
+submission['is_iceberg'] = preds
+submission.to_csv('sub_vgg16_1220.csv', index=False)

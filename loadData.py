@@ -16,7 +16,8 @@ class loader:
         self.X_train = np.concatenate([self.X_band_1[:, :, :, np.newaxis], self.X_band_2[:, :, :, np.newaxis],
                                      ((self.X_band_1 + self.X_band_2) / 2)[:, :, :, np.newaxis]], axis=-1)
         self.id = self.json_data['id']
-        self.inc_angle = self.json_data['inc_angle'].replace('na', 0)
+        self.inc_angle = pd.to_numeric(self.json_data['inc_angle'], errors='coerce')
+        self.inc_angle = self.inc_angle.fillna(method='pad')
 
         if 'is_iceberg' in self.json_data.keys():
             self.labels = self.json_data['is_iceberg']

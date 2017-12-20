@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 from keras.models import Sequential, Model
 from keras.layers import Conv2D, MaxPooling2D, Input, Dense, Flatten, Dropout, Activation, GlobalMaxPooling2D
+from keras.layers import concatenate
 from keras.optimizers import Adam, SGD
 from keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
 from sklearn.model_selection import StratifiedKFold
@@ -60,29 +61,6 @@ class iceberg_model:
 
         opt = Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.0)
 
-        self.model.compile(loss='binary_crossentropy',
-                           optimizer=opt,
-                           metrics=['accuracy'])
-
-    def vgg_model(self):
-        trainImg, valImg, trainLabels, valLabels = self.dataLoader.train_test_more_images()
-
-        base_model = VGG16(weights='imagenet', include_top=False,
-                           input_shape=trainImg.shape[1:], classes=1)
-        x = base_model.get_layer('block5_pool').output
-
-        x = GlobalMaxPooling2D()(x)
-        merge_one = Dense(512, activation='relu', name='fc2')(x)
-        merge_one = Dropout(0.3)(merge_one)
-        merge_one = Dense(512, activation='relu', name='fc3')(merge_one)
-        merge_one = Dropout(0.3)(merge_one)
-
-        predictions = Dense(1, activation='sigmoid')(merge_one)
-
-        self.model = Model(input=[base_model.input], output=predictions)
-
-        opt = SGD(lr=1e-3, decay=1e-6, momentum=0.9, nesterov=True)
-        # opt = Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.0)
         self.model.compile(loss='binary_crossentropy',
                            optimizer=opt,
                            metrics=['accuracy'])
