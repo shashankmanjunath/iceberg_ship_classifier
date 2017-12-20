@@ -81,9 +81,10 @@ class iceberg_model:
 
         self.model = Model(input=[base_model.input], output=predictions)
 
-        sgd = SGD(lr=1e-3, decay=1e-6, momentum=0.9, nesterov=True)
+        # sgd = SGD(lr=1e-3, decay=1e-6, momentum=0.9, nesterov=True)
+        opt = Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.0)
         self.model.compile(loss='binary_crossentropy',
-                           optimizer=sgd,
+                           optimizer=opt,
                            metrics=['accuracy'])
 
     def callbacks(self):
@@ -139,7 +140,7 @@ class iceberg_model:
             self.vgg_model()
 
             self.model.fit(trainImg[train_k], trainLabel[train_k],
-                           epochs=50,
+                           epochs=100,
                            validation_data=(valImg, valLabel),
                            verbose=1,
                            callbacks=self.callbacks())
