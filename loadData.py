@@ -17,7 +17,7 @@ class loader:
                                      ((self.X_band_1 + self.X_band_2) / 2)[:, :, :, np.newaxis]], axis=-1)
         self.id = self.json_data['id']
         self.inc_angle = pd.to_numeric(self.json_data['inc_angle'], errors='coerce')
-        self.inc_angle = self.inc_angle.fillna(method='pad')
+        self.inc_angle = np.asarray(self.inc_angle.fillna(method='pad'))
 
         if 'is_iceberg' in self.json_data.keys():
             self.labels = self.json_data['is_iceberg']
@@ -29,12 +29,15 @@ class loader:
             self.labels = self.labels[ind[0]]
 
     def train_test_split(self):
-        trainImg, valImg, trainLabel, valLabel = train_test_split(self.X_train, self.labels, random_state=1,
-                                                                  train_size=self.split_pct)
-        return trainImg, valImg, trainLabel, valLabel
+        trainImg, valImg, trainLabel, valLabel, trainAngle, valAngle = train_test_split(self.X_train,
+                                                                                        self.labels,
+                                                                                        self.inc_angle,
+                                                                                        random_state=1,
+                                                                                        train_size=self.split_pct)
+        return trainImg, valImg, trainLabel, valLabel, trainAngle, valAngle
 
     def train_test_more_images(self):
-        trainImg, valImg, trainLabel, valLabel = self.train_test_split()
+        trainImg, valImg, trainLabel, valLabel, trainAngle, valAngle = self.train_test_split()
 
         trainImg_more = get_more_images(trainImg)
         valImg_more = get_more_images(valImg)
@@ -42,7 +45,10 @@ class loader:
         trainLabel_more = np.concatenate([trainLabel, trainLabel, trainLabel])
         valLabel_more = np.concatenate([valLabel, valLabel, valLabel])
 
-        return trainImg_more, valImg_more, trainLabel_more, valLabel_more
+        trainAngle_more = np.concatenate([trainAngle, trainAngle, trainAngle])
+        valAngle_more = np.concatenate([valAngle, valAngle, valAngle])
+
+        return trainImg_more, valImg_more, trainLabel_more, valLabel_more, trainAngle_more, valAngle_more
 
 
 def get_more_images(imgs):

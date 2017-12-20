@@ -62,14 +62,42 @@ class iceberg_model:
             yield[X1i[0], X2i[1]], X1i[1]
 
     def callbacks(self):
-        es = EarlyStopping("val_loss", patience=10, mode="min")
+        es = EarlyStopping("loss", patience=10, mode="min")
         msave = ModelCheckpoint(self.run_weight_name, save_best_only=True)
         return [es, msave]
 
     def kFoldValidation(self):
-        print('Validating Model...')
+        train = pd.read_json("../iceberg_ship_classifier/data_train/train.json")
+        test = pd.read_json("../iceberg_ship_classifier/data_test/test.json")
+        target_train = train['is_iceberg']
 
-        trainImg, valImg, trainLabel, valLabel = self.dataLoader.train_test_split()
+        test['inc_angle'] = pd.to_numeric(test['inc_angle'], errors='coerce')
+        train['inc_angle'] = pd.to_numeric(train['inc_angle'], errors='coerce')  # We have only 133 NAs.
+        train['inc_angle'] = train['inc_angle'].fillna(method='pad')
+        X_angle = train['inc_angle']
+        test['inc_angle'] = pd.to_numeric(test['inc_angle'], errors='coerce')
+        X_test_angle = test['inc_angle']
+
+        # Generate the training data
+        X_band_1 = np.array([np.array(band).astype(np.float32).reshape(75, 75) for band in train["band_1"]])
+        X_band_2 = np.array([np.array(band).astype(np.float32).reshape(75, 75) for band in train["band_2"]])
+        X_band_3 = (X_band_1 + X_band_2) / 2
+        # X_band_3=np.array([np.full((75, 75), angel).astype(np.float32) for angel in train["inc_angle"]])
+        X_train = np.concatenate([X_band_1[:, :, :, np.newaxis]
+                                     , X_band_2[:, :, :, np.newaxis]
+                                     , X_band_3[:, :, :, np.newaxis]], axis=-1)
+
+        X_band_test_1 = np.array([np.array(band).astype(np.float32).reshape(75, 75) for band in test["band_1"]])
+        X_band_test_2 = np.array([np.array(band).astype(np.float32).reshape(75, 75) for band in test["band_2"]])
+        X_band_test_3 = (X_band_test_1 + X_band_test_2) / 2
+        # X_band_test_3=np.array([np.full((75, 75), angel).astype(np.float32) for angel in test["inc_angle"]])
+        X_test = np.concatenate([X_band_test_1[:, :, :, np.newaxis]
+                                    , X_band_test_2[:, :, :, np.newaxis]
+                                    , X_band_test_3[:, :, :, np.newaxis]], axis=-1)
+
+        trainImg = X_train
+        trainAngle = X_angle
+        trainLabel = target_train
 
         n_split = 5
         kfold = StratifiedKFold(n_splits=n_split, shuffle=True, random_state=16)
@@ -80,15 +108,16 @@ class iceberg_model:
             print('Run ' + str(count + 1) + ' out of ' + str(n_split))
             self.vgg_model()
 
-            self.model.fit_generator(self.gen_flow(trainImg[train_k],
-                                                   self.dataLoader.inc_angle[train_k],
-                                                   trainLabel[train_k]),
+            generator = self.gen_flow(trainImg[train_k], trainAngle[train_k], trainLabel[train_k])
+            callbacks = self.callbacks()
+
+            self.model.fit_generator(generator,
                                      epochs=100,
                                      steps_per_epoch=24,
                                      verbose=1,
-                                     callbacks=self.callbacks())
+                                     callbacks=callbacks)
 
-            scores = self.model.evaluate([trainImg[test_k], self.dataLoader.inc_angle[test_k]], trainLabel[test_k])
+            scores = self.model.evaluate([trainImg[test_k], trainAngle[test_k]], trainLabel[test_k])
             print(scores)
             loss.append(scores[0])
             count += 1

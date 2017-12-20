@@ -5,9 +5,12 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import log_loss
 from sklearn.model_selection import StratifiedKFold, StratifiedShuffleSplit
 
-train = pd.read_json("../iceberg_ship_classifier/data_train/train.json")
+# train = pd.read_json("../iceberg_ship_classifier/data_train/train.json")
+# test = pd.read_json("../iceberg_ship_classifier/data_test/test.json")
+train = pd.read_json("../icebergClassifier/data_train/train.json")
+test = pd.read_json("../icebergClassifier/data_test/test.json")
 target_train=train['is_iceberg']
-test = pd.read_json("../iceberg_ship_classifier/data_test/test.json")
+
 
 test['inc_angle'] = pd.to_numeric(test['inc_angle'], errors='coerce')
 train['inc_angle'] = pd.to_numeric(train['inc_angle'], errors='coerce')  # We have only 133 NAs.

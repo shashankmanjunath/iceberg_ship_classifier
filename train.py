@@ -73,7 +73,7 @@ class iceberg_model:
     def train_model(self):
         print('Training Model...')
         self.create_model()
-        trainImg, valImg, trainLabels, valLabels = self.dataLoader.train_test_more_images()
+        trainImg, valImg, trainLabels, valLabels, _, _ = self.dataLoader.train_test_more_images()
 
 
         self.model.fit(trainImg, trainLabels,
@@ -85,7 +85,7 @@ class iceberg_model:
     def test_model(self):
         print('Testing model...')
 
-        _, valImg, _, valLabels = self.dataLoader.train_test_more_images()
+        _, valImg, _, valLabels, _, _ = self.dataLoader.train_test_more_images()
 
         if not self.model:
             self.create_model()
@@ -100,7 +100,7 @@ class iceberg_model:
     def kFoldValidation(self):
         print('Validating Model...')
 
-        trainImg, valImg, trainLabel, valLabel = self.dataLoader.train_test_more_images()
+        trainImg, valImg, trainLabel, valLabel, _, _ = self.dataLoader.train_test_more_images()
 
         n_split = 10
         kfold = StratifiedKFold(n_splits=n_split, shuffle=True)
