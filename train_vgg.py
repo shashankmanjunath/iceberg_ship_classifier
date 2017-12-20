@@ -29,7 +29,6 @@ class iceberg_model:
                                       rotation_range=10)
 
     def vgg_model(self):
-        X_train = self.dataLoader.
         input_2 = Input(shape=[1], name="angle")
         angle_layer = Dense(1, )(input_2)
         base_model = VGG16(weights='imagenet', include_top=False,
@@ -60,7 +59,7 @@ class iceberg_model:
         while True:
             X1i = genX1.next()
             X2i = genX2.next()
-            yield[X1i[0], X2i[0], X1i[1]]
+            yield[X1i[0], X2i[1]], X1i[1]
 
     def callbacks(self):
         es = EarlyStopping("val_loss", patience=10, mode="min")
@@ -86,7 +85,6 @@ class iceberg_model:
                                                    trainLabel[train_k]),
                                      epochs=100,
                                      steps_per_epoch=24,
-                                     validation_data=(valImg, valLabel),
                                      verbose=1,
                                      callbacks=self.callbacks())
 
@@ -107,8 +105,8 @@ class iceberg_model:
 
 
 if __name__ == '__main__':
-    data_path = '../iceberg_ship_classifier/data_train/train.json'
-    # data_path = '../icebergClassifier/data_train/train.json'
+    # data_path = '../iceberg_ship_classifier/data_train/train.json'
+    data_path = '../icebergClassifier/data_train/train.json'
     x = iceberg_model(data_path)
     # x.train_model()
     # x.test_model()
