@@ -70,10 +70,11 @@ class iceberg_model:
         return es, msave
 
     def kFoldValidation(self):
+        # trainImg, valImg, trainLabel, valLabel = train_test_split(self.dataLoader.X_train,
+        #                                                           self.dataLoader.labels,
+        #                                                           train_size=0.8)
         trainImg = self.dataLoader.X_train
         trainLabel = self.dataLoader.labels
-
-        trainImg, trainLabel, valImg, valLabel = train_test_split(trainImg, trainLabel)
 
         n_split = 10
         kfold = StratifiedKFold(n_splits=n_split, shuffle=True, random_state=16)
@@ -94,7 +95,6 @@ class iceberg_model:
                                 epochs=100,
                                 steps_per_epoch=24,
                                 verbose=1,
-                                validation_data=(valImg, valLabel),
                                 callbacks=[es, msave])
 
             scores = model.evaluate(trainImg[test_k], trainLabel[test_k])
@@ -114,7 +114,8 @@ class iceberg_model:
         print("")
 
     def train(self):
-        trainImg, valImg, trainLabel, valLabel = train_test_split(self.dataLoader.X_train, self.dataLoader.labels)
+        trainImg, valImg, trainLabel, valLabel = train_test_split(self.dataLoader.X_train,
+                                                                  self.dataLoader.labels)
         model = self.vgg_model()
         es, msave = self.callbacks(wname=self.run_weight_name)
         model.fit(trainImg, trainLabel,
@@ -150,7 +151,7 @@ class iceberg_model:
 
 
 if __name__ == '__main__':
-    data_path = '../iceberg_ship_classifier/data_train/train.json'
-    # data_path = '../icebergClassifier/data_train/train.json'
+    # data_path = '../iceberg_ship_classifier/data_train/train.json'
+    data_path = '../icebergClassifier/data_train/train.json'
     x = iceberg_model(data_path)
     x.kFoldValidation()
