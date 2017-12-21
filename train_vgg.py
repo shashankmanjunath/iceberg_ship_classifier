@@ -9,7 +9,7 @@ from keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
 from sklearn.model_selection import StratifiedKFold
 from keras.applications.vgg16 import VGG16
 from keras.preprocessing.image import ImageDataGenerator
-
+from sklearn.model_selection import train_test_split
 
 class iceberg_model:
     def __init__(self, dataPath):
@@ -19,7 +19,7 @@ class iceberg_model:
 
         self.model = self.vgg_model()
         self.train_test_split_val = 0.8
-        self.run_weight_name = 'model_weights_1220.hdf5'
+        self.run_weight_name = 'vgg_1221.hdf5'
         self.gen = ImageDataGenerator(horizontal_flip=True,
                                       vertical_flip=True,
                                       width_shift_range=0.,
@@ -66,8 +66,8 @@ class iceberg_model:
 
     def callbacks(self, wname):
         es = EarlyStopping("loss", patience=10, mode="min")
-        msave = ModelCheckpoint(wname, save_best_only=True)
-        return [es, msave]
+        msave = ModelCheckpoint(filename=wname, save_best_only=True)
+        return es, msave
 
     def kFoldValidation(self):
         trainImg = self.dataLoader.X_train
@@ -85,7 +85,7 @@ class iceberg_model:
 
             # generator = self.gen_flow(trainImg[train_k], trainAngle[train_k], trainLabel[train_k])
             weight_name = "vgg_1220_weights_run_%s.hdf5" % count
-            callbacks = self.callbacks(wname=weight_name)
+            es, msave = self.callbacks(wname=weight_name)
 
             model = self.vgg_model()
 
@@ -93,7 +93,7 @@ class iceberg_model:
                       epochs=100,
                       # steps_per_epoch=24,
                       verbose=1,
-                      callbacks=callbacks)
+                      callbacks=[es, msave])
 
             scores = model.evaluate(trainImg[test_k], trainLabel[test_k])
             print(scores)
@@ -110,6 +110,26 @@ class iceberg_model:
 
         print("Loss: " + str(np.mean(loss)), str(np.std(loss)))
         print("")
+
+    def train(self):
+        trainImg, valImg, trainLabel, valLabel = train_test_split(self.dataLoader.X_train, self.dataLoader.labels)
+        model = self.vgg_model()
+        es, msave = self.callbacks(wname=self.run_weight_name)
+        model.fit(trainImg, trainLabel,
+                  epochs=50,
+                  validation_data=(valImg, valLabel),
+                  verbose=1,
+                  callbacks=[es,msave])
+
+    def submission(self):
+        print('Generating submission...')
+        testLoader = loader('../iceberg_ship_classifier/data_test/test.json')
+        self.model.load_weights(self.run_weight_name)
+        pred = self.model.predict(testLoader.X_train)
+        submission = pd.DataFrame()
+        submission['id'] = testLoader.id
+        submission['is_iceberg'] = pred.reshape((pred.shape[0]))
+        submission.to_csv('sub_vgg_1221.csv', index=False)
 
     def submission_on_best(self):
         print('Generating submission...')
@@ -131,7 +151,9 @@ if __name__ == '__main__':
     data_path = '../iceberg_ship_classifier/data_train/train.json'
     # data_path = '../icebergClassifier/data_train/train.json'
     x = iceberg_model(data_path)
-    # x.train_model()
-    # x.test_model()
-    x.kFoldValidation()
+    x.train()
+    x.submission()
+    
+    # x.kFoldValidation()
+    # x.submission_on_best()
     # x.submission('../iceberg_ship_classifier/data_test/test.json')
