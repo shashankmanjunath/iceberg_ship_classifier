@@ -71,8 +71,9 @@ class iceberg_model:
 
     def kFoldValidation(self):
         trainImg = self.dataLoader.X_train
-        # trainAngle = self.dataLoader.inc_angle
         trainLabel = self.dataLoader.labels
+
+        trainImg, trainLabel, valImg, valLabel = train_test_split(trainImg, trainLabel)
 
         n_split = 10
         kfold = StratifiedKFold(n_splits=n_split, shuffle=True, random_state=16)
@@ -83,17 +84,18 @@ class iceberg_model:
             print('Run ' + str(count + 1) + ' out of ' + str(n_split))
             self.vgg_model()
 
-            # generator = self.gen_flow(trainImg[train_k], trainAngle[train_k], trainLabel[train_k])
+            generator = self.gen.flow(trainImg[train_k], trainLabel[train_k], batch_size=64, seed=55)
             weight_name = "vgg_1220_weights_run_%s.hdf5" % count
             es, msave = self.callbacks(wname=weight_name)
 
             model = self.vgg_model()
 
-            model.fit(trainImg[train_k], trainLabel[train_k],
-                      epochs=100,
-                      # steps_per_epoch=24,
-                      verbose=1,
-                      callbacks=[es, msave])
+            model.fit_generator(generator,
+                                epochs=100,
+                                steps_per_epoch=24,
+                                verbose=1,
+                                validation_data=(valImg, valLabel),
+                                callbacks=[es, msave])
 
             scores = model.evaluate(trainImg[test_k], trainLabel[test_k])
             print(scores)
@@ -151,9 +153,4 @@ if __name__ == '__main__':
     data_path = '../iceberg_ship_classifier/data_train/train.json'
     # data_path = '../icebergClassifier/data_train/train.json'
     x = iceberg_model(data_path)
-    x.train()
-    x.submission()
-
-    # x.kFoldValidation()
-    # x.submission_on_best()
-    # x.submission('../iceberg_ship_classifier/data_test/test.json')
+    x.kFoldValidation()
