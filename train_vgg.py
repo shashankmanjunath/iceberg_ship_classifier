@@ -62,9 +62,9 @@ class iceberg_model:
             # yield[X1i[0], X2i[1]], X1i[1]
             yield X1i[0], X1i[1]
 
-    def callbacks(self):
+    def callbacks(self, wname=self.run_weight_name):
         es = EarlyStopping("loss", patience=10, mode="min")
-        msave = ModelCheckpoint(self.run_weight_name, save_best_only=True)
+        msave = ModelCheckpoint(wname, save_best_only=True)
         return [es, msave]
 
     def kFoldValidation(self):
@@ -72,7 +72,7 @@ class iceberg_model:
         trainAngle = self.dataLoader.inc_angle
         trainLabel = self.dataLoader.labels
 
-        n_split = 5
+        n_split = 10
         kfold = StratifiedKFold(n_splits=n_split, shuffle=True, random_state=16)
         loss = []
         count = 0
@@ -82,11 +82,13 @@ class iceberg_model:
             self.vgg_model()
 
             # generator = self.gen_flow(trainImg[train_k], trainAngle[train_k], trainLabel[train_k])
-            callbacks = self.callbacks()
+            weight_name = "%s_vgg_1220_weights.hdf5" % count
+            callbacks = self.callbacks(wname=weight_name)
+
 
             self.model.fit(trainImg[train_k], trainLabel[train_k],
                            epochs=100,
-                           steps_per_epoch=24,
+                           # steps_per_epoch=24,
                            verbose=1,
                            callbacks=callbacks)
 
