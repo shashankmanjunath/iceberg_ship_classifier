@@ -93,7 +93,7 @@ class iceberg_model:
                                 epochs=100,
                                 steps_per_epoch=24,
                                 verbose=1,
-                                validation_data=(val_img, valLabel),
+                                validation_data=(valImg, valLabel),
                                 callbacks=[es, msave])
 
             scores = model.evaluate(trainImg[test_k], trainLabel[test_k])
