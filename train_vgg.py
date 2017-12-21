@@ -28,6 +28,8 @@ class iceberg_model:
                                       zoom_range=0.2,
                                       rotation_range=10)
 
+        self.loss = []
+
     def vgg_model(self):
         # input_2 = Input(shape=[1], name="angle")
         # angle_layer = Dense(1, )(input_2)
@@ -62,19 +64,18 @@ class iceberg_model:
             # yield[X1i[0], X2i[1]], X1i[1]
             yield X1i[0], X1i[1]
 
-    def callbacks(self, wname=self.run_weight_name):
+    def callbacks(self, wname):
         es = EarlyStopping("loss", patience=10, mode="min")
         msave = ModelCheckpoint(wname, save_best_only=True)
         return [es, msave]
 
     def kFoldValidation(self):
         trainImg = self.dataLoader.X_train
-        trainAngle = self.dataLoader.inc_angle
+        # trainAngle = self.dataLoader.inc_angle
         trainLabel = self.dataLoader.labels
 
         n_split = 10
         kfold = StratifiedKFold(n_splits=n_split, shuffle=True, random_state=16)
-        loss = []
         count = 0
 
         for train_k, test_k in kfold.split(trainImg, trainLabel):
@@ -94,17 +95,32 @@ class iceberg_model:
 
             scores = self.model.evaluate(trainImg[test_k], trainLabel[test_k])
             print(scores)
-            loss.append(scores[0])
+            self.loss.append(scores[0])
             count += 1
 
         print("")
-        print("Length of scores: " + str(len(loss)))
+        print("Length of scores: " + str(len(self.loss)))
 
-        for i in range(len(loss)):
-            print("Run " + str(i + 1) + ": " + str(loss[i]))
+        for i in range(len(self.loss)):
+            print("Run " + str(i + 1) + ": " + str(self.loss[i]))
 
-        print("Loss: " + str(np.mean(loss)), str(np.std(loss)))
+        print("Loss: " + str(np.mean(self.loss)), str(np.std(self.loss)))
         print("")
+
+    def submission_on_best(self):
+        print('Generating submission...')
+        testLoader = loader('../iceberg_ship_classifier/data_test/test.json')
+
+        minInd = self.loss.index(np.min(self.loss))
+        weight_name = str(minInd) + "_vgg_1220_weights.hdf5"
+        self.model.load_weights(weight_name)
+
+        pred = self.model.predict(testLoader.X_train)
+
+        submission = pd.DataFrame()
+        submission['id'] = testLoader.id
+        submission['is_iceberg'] = pred.reshape((pred.shape[0]))
+        submission.to_csv('sub_vgg_1220.csv', index=False)
 
 
 if __name__ == '__main__':
