@@ -77,34 +77,38 @@ class iceberg_model:
         n_split = 10
         kfold = StratifiedKFold(n_splits=n_split, shuffle=True, random_state=16)
         count = 0
+        loss = []
 
         for train_k, test_k in kfold.split(trainImg, trainLabel):
             print('Run ' + str(count + 1) + ' out of ' + str(n_split))
             self.vgg_model()
 
             # generator = self.gen_flow(trainImg[train_k], trainAngle[train_k], trainLabel[train_k])
-            weight_name = "%s_vgg_1220_weights.hdf5" % count
+            weight_name = "vgg_1220_weights_run_%s.hdf5" % count
             callbacks = self.callbacks(wname=weight_name)
 
+            model = self.vgg_model()
 
-            self.model.fit(trainImg[train_k], trainLabel[train_k],
-                           epochs=100,
-                           # steps_per_epoch=24,
-                           verbose=1,
-                           callbacks=callbacks)
+            model.fit(trainImg[train_k], trainLabel[train_k],
+                      epochs=100,
+                      # steps_per_epoch=24,
+                      verbose=1,
+                      callbacks=callbacks)
 
-            scores = self.model.evaluate(trainImg[test_k], trainLabel[test_k])
+            scores = model.evaluate(trainImg[test_k], trainLabel[test_k])
             print(scores)
-            self.loss.append(scores[0])
+            loss.append(scores[0])
             count += 1
 
+        self.loss = loss
+
         print("")
-        print("Length of scores: " + str(len(self.loss)))
+        print("Length of scores: " + str(len(loss)))
 
-        for i in range(len(self.loss)):
-            print("Run " + str(i + 1) + ": " + str(self.loss[i]))
+        for i in range(len(loss)):
+            print("Run " + str(i + 1) + ": " + str(loss[i]))
 
-        print("Loss: " + str(np.mean(self.loss)), str(np.std(self.loss)))
+        print("Loss: " + str(np.mean(loss)), str(np.std(loss)))
         print("")
 
     def submission_on_best(self):
@@ -112,7 +116,7 @@ class iceberg_model:
         testLoader = loader('../iceberg_ship_classifier/data_test/test.json')
 
         minInd = self.loss.index(np.min(self.loss))
-        weight_name = str(minInd) + "_vgg_1220_weights.hdf5"
+        weight_name = "vgg_1220_weights_run_" + str(minInd) + ".hdf5"
         self.model.load_weights(weight_name)
 
         pred = self.model.predict(testLoader.X_train)
