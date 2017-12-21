@@ -65,8 +65,8 @@ class iceberg_model:
             yield X1i[0], X1i[1]
 
     def callbacks(self, wname):
-        es = EarlyStopping("loss", patience=10, mode="min")
-        msave = ModelCheckpoint(filename=wname, save_best_only=True)
+        es = EarlyStopping("val_loss", patience=20, mode="min")
+        msave = ModelCheckpoint(filepath=wname, save_best_only=True)
         return es, msave
 
     def kFoldValidation(self):
@@ -153,7 +153,7 @@ if __name__ == '__main__':
     x = iceberg_model(data_path)
     x.train()
     x.submission()
-    
+
     # x.kFoldValidation()
     # x.submission_on_best()
     # x.submission('../iceberg_ship_classifier/data_test/test.json')
