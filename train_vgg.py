@@ -70,11 +70,9 @@ class iceberg_model:
         return es, msave
 
     def kFoldValidation(self):
-        # trainImg, valImg, trainLabel, valLabel = train_test_split(self.dataLoader.X_train,
-        #                                                           self.dataLoader.labels,
-        #                                                           train_size=0.8)
-        trainImg = self.dataLoader.X_train
-        trainLabel = self.dataLoader.labels
+        trainImg, valImg, trainLabel, valLabel = train_test_split(self.dataLoader.X_train,
+                                                                  self.dataLoader.labels,
+                                                                  train_size=0.8)
 
         n_split = 10
         kfold = StratifiedKFold(n_splits=n_split, shuffle=True, random_state=16)
@@ -95,6 +93,7 @@ class iceberg_model:
                                 epochs=100,
                                 steps_per_epoch=24,
                                 verbose=1,
+                                validation_data=(val_img, valLabel),
                                 callbacks=[es, msave])
 
             scores = model.evaluate(trainImg[test_k], trainLabel[test_k])
