@@ -151,7 +151,7 @@ class iceberg_model:
 
 
 if __name__ == '__main__':
-    # data_path = '../iceberg_ship_classifier/data_train/train.json'
-    data_path = '../icebergClassifier/data_train/train.json'
+    data_path = '../iceberg_ship_classifier/data_train/train.json'
+    # data_path = '../icebergClassifier/data_train/train.json'
     x = iceberg_model(data_path)
     x.kFoldValidation()
