@@ -81,16 +81,15 @@ class iceberg_model:
             print('Run ' + str(count + 1) + ' out of ' + str(n_split))
             self.vgg_model()
 
-            generator = self.gen_flow(trainImg[train_k], trainAngle[train_k], trainLabel[train_k])
+            # generator = self.gen_flow(trainImg[train_k], trainAngle[train_k], trainLabel[train_k])
             callbacks = self.callbacks()
 
-            self.model.fit_generator(generator,
-                                     epochs=100,
-                                     steps_per_epoch=24,
-                                     verbose=1,
-                                     callbacks=callbacks)
+            self.model.fit(trainImg[train_k], trainLabel[train_k],
+                           epochs=100,
+                           steps_per_epoch=24,
+                           verbose=1,
+                           callbacks=callbacks)
 
-            # scores = self.model.evaluate([trainImg[test_k], trainAngle[test_k]], trainLabel[test_k])
             scores = self.model.evaluate(trainImg[test_k], trainLabel[test_k])
             print(scores)
             loss.append(scores[0])
@@ -107,8 +106,8 @@ class iceberg_model:
 
 
 if __name__ == '__main__':
-    # data_path = '../iceberg_ship_classifier/data_train/train.json'
-    data_path = '../icebergClassifier/data_train/train.json'
+    data_path = '../iceberg_ship_classifier/data_train/train.json'
+    # data_path = '../icebergClassifier/data_train/train.json'
     x = iceberg_model(data_path)
     # x.train_model()
     # x.test_model()
