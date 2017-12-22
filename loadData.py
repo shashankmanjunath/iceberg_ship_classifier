@@ -20,7 +20,7 @@ class loader:
         self.inc_angle = self.inc_angle.fillna(method='pad')
 
         if 'is_iceberg' in self.json_data.keys():
-            self.labels = self.json_data['is_iceberg']
+            self.labels = np.asarray(self.json_data['is_iceberg'])
 
     def clean_inc_angle(self):
         ind = np.where(self.inc_angle > 0)
