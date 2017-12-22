@@ -17,7 +17,7 @@ class loader:
                                      ((self.X_band_1 + self.X_band_2) / 2)[:, :, :, np.newaxis]], axis=-1)
         self.id = self.json_data['id']
         self.inc_angle = pd.to_numeric(self.json_data['inc_angle'], errors='coerce')
-        self.inc_angle = self.inc_angle.fillna(method='pad')
+        self.inc_angle = np.asarray(self.inc_angle.fillna(method='pad'))
 
         if 'is_iceberg' in self.json_data.keys():
             self.labels = np.asarray(self.json_data['is_iceberg'])

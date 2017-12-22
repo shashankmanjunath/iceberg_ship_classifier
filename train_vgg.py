@@ -120,6 +120,34 @@ class iceberg_model:
         model.load_weights(self.run_weight_name)
         predValues = model.predict([testLoader.X_train, testLoader.inc_angle])
 
+        trainImg = self.dataLoader.X_train
+        trainAngle = self.dataLoader.inc_angle
+        trainLabel = self.dataLoader.labels
+
+        for i in range(len(predValues)):
+            if predValues[i] < 0.05 or predValues[i] > 0.95:
+                tmp = np.ndarray((1, 75, 75, 3))
+                tmp[:, :, :, :] = testLoader.X_train[i]
+                trainImg = np.concatenate((trainImg, tmp))
+                trainAngle = np.append(trainAngle, testLoader.inc_angle[i])
+                trainLabel = np.append(trainLabel, predValues[i] > 0.5)
+                
+        trainImg, valImg, trainLabel, valLabel, trainAngle, valAngle = train_test_split(trainImg,
+                                                                                        trainLabel,
+                                                                                        trainAngle,
+                                                                                        train_size=0.8)
+        print(trainImg.shape, trainLabel.shape, trainAngle.shape)
+        print(valImg.shape, valLabel.shape, valAngle.shape)
+        print(self.dataLoader.X_train.shape, trainImg.shape)
+
+        model = self.vgg_model()
+        es, msave = self.callbacks(wname=self.run_weight_name)
+        model.fit([trainImg, trainAngle], trainLabel,
+                  epochs=50,
+                  validation_data=([valImg, valAngle], valLabel),
+                  verbose=1,
+                  callbacks=[es, msave])
+
         pseudoData = pd.DataFrame()
         pseudoData['id'] = testLoader.id
         pseudoData['is_iceberg'] = predValues.reshape((predValues.shape[0]))
@@ -131,8 +159,6 @@ class iceberg_model:
                                                                                         self.dataLoader.labels,
                                                                                         self.dataLoader.inc_angle,
                                                                                         train_size=0.8)
-        print(trainImg.shape, valImg.shape, trainAngle.shape)
-        print(trainLabel.shape, valLabel.shape, valAngle.shape)
 
         model = self.vgg_model()
         es, msave = self.callbacks(wname=self.run_weight_name)
