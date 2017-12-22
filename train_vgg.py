@@ -87,8 +87,8 @@ class iceberg_model:
             print('Run ' + str(count + 1) + ' out of ' + str(n_split))
 
             generator = self.gen_flow(trainImg[train_k], trainAngle[train_k], trainLabel[train_k])
-            # weight_name = "vgg_1220_weights_run_%s.hdf5" % count
-            es, msave = self.callbacks(wname=0)
+            weight_name = "vgg_1220_weights_run_%s.hdf5" % count
+            es, msave = self.callbacks(wname=weight_name)
 
             model = self.vgg_model()
 
@@ -113,17 +113,30 @@ class iceberg_model:
         print("Loss: " + str(np.mean(loss)), str(np.std(loss)))
         print("")
 
+    def pseudoLabeling(self, test_path):
+        self.train()
+        testLoader = loader(test_path)
+        model = self.vgg_model()
+        model.load_weights(self.run_weight_name)
+        predValues = model.predict([testLoader.X_train, testLoader.inc_angle])
+        print(predValues)
+        return 0
+
     def train(self):
-        trainImg, valImg, trainLabel, valLabel = train_test_split(self.dataLoader.X_train,
-                                                                  self.dataLoader.labels,
-                                                                  train_size=0.8)
+        trainImg, valImg, trainLabel, valLabel, trainAngle, valAngle = train_test_split(self.dataLoader.X_train,
+                                                                                        self.dataLoader.labels,
+                                                                                        self.dataLoader.inc_angle,
+                                                                                        train_size=0.8)
+        print(trainImg.shape, valImg.shape, trainAngle.shape)
+        print(trainLabel.shape, valLabel.shape, valAngle.shape)
+
         model = self.vgg_model()
         es, msave = self.callbacks(wname=self.run_weight_name)
-        model.fit(trainImg, trainLabel,
+        model.fit([trainImg, trainAngle], trainLabel,
                   epochs=50,
-                  validation_data=(valImg, valLabel),
+                  validation_data=([valImg, valAngle], valLabel),
                   verbose=1,
-                  callbacks=[es,msave])
+                  callbacks=[es, msave])
 
     def submission(self):
         print('Generating submission...')
@@ -153,6 +166,8 @@ class iceberg_model:
 
 if __name__ == '__main__':
     data_path = '../iceberg_ship_classifier/data_train/train.json'
+    data_test = '../iceberg_ship_classifier/data_test/test.json'
     # data_path = '../icebergClassifier/data_train/train.json'
+    # data_test = '../icebergClassifier/data_test/test.json'
     x = iceberg_model(data_path)
-    x.kFoldValidation()
+    x.pseudoLabeling(data_test)
