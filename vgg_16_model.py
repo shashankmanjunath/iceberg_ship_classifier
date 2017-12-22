@@ -78,8 +78,9 @@ def gen_flow_for_two_inputs(X1, X2, y):
 # Finally create generator
 def get_callbacks(filepath, patience=2):
     es = EarlyStopping('val_loss', patience=10, mode="min")
-    msave = ModelCheckpoint(filepath, save_best_only=True)
-    return [es, msave]
+    # msave = ModelCheckpoint(filepath, save_best_only=True)
+    # return [es, msave]
+    return [es]
 
 
 def getVggAngleModel():
@@ -140,7 +141,7 @@ def myAngleCV(X_train, X_angle, X_test):
             callbacks=callbacks)
 
         # Getting the Best Model
-        galaxyModel.load_weights(filepath=file_path)
+        # galaxyModel.load_weights(filepath=file_path)
         # Getting Training Score
         score = galaxyModel.evaluate([X_train_cv, X_angle_cv], y_train_cv, verbose=0)
         print('Train loss:', score[0])
