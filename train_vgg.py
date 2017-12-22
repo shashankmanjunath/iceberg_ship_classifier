@@ -83,18 +83,18 @@ class iceberg_model:
             print('Run ' + str(count + 1) + ' out of ' + str(n_split))
             self.vgg_model()
 
-            generator = self.gen.flow(trainImg[train_k], trainLabel[train_k], batch_size=64, seed=55)
+            # generator = self.gen.flow(trainImg[train_k], trainLabel[train_k], batch_size=64, seed=55)
             weight_name = "vgg_1220_weights_run_%s.hdf5" % count
             es, msave = self.callbacks(wname=weight_name)
 
             model = self.vgg_model()
 
-            model.fit_generator(generator,
-                                epochs=25,
-                                steps_per_epoch=24,
-                                verbose=1,
-                                validation_data=(valImg, valLabel),
-                                callbacks=[es, msave])
+            model.fit(trainImg[train_k], trainLabel[train_k],
+                      epochs=100,
+                      steps_per_epoch=24,
+                      verbose=1,
+                      validation_data=(valImg, valLabel),
+                      callbacks=[es])
 
             scores = model.evaluate(trainImg[test_k], trainLabel[test_k])
             print(scores)
