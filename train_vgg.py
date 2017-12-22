@@ -65,7 +65,7 @@ class iceberg_model:
             # yield X1i[0], X1i[1]
 
     def callbacks(self, wname):
-        es = EarlyStopping("val_loss", patience=10, mode="min")
+        es = EarlyStopping("val_loss", patience=50, mode="min")
         msave = ModelCheckpoint(filepath=wname, save_best_only=True)
         return es, msave
 
@@ -119,7 +119,11 @@ class iceberg_model:
         model = self.vgg_model()
         model.load_weights(self.run_weight_name)
         predValues = model.predict([testLoader.X_train, testLoader.inc_angle])
-        print(predValues)
+
+        pseudoData = pd.DataFrame()
+        pseudoData['id'] = testLoader.id
+        pseudoData['is_iceberg'] = predValues.reshape((predValues.shape[0]))
+        pseudoData.to_csv('pseudoLabel.csv', index=False)
         return 0
 
     def train(self):
