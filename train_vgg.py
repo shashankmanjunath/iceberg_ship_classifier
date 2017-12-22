@@ -65,14 +65,17 @@ class iceberg_model:
             yield X1i[0], X1i[1]
 
     def callbacks(self, wname):
-        es = EarlyStopping("val_loss", patience=20, mode="min")
+        es = EarlyStopping("val_loss", patience=10, mode="min")
         msave = ModelCheckpoint(filepath=wname, save_best_only=True)
         return es, msave
 
     def kFoldValidation(self):
-        trainImg, valImg, trainLabel, valLabel = train_test_split(self.dataLoader.X_train,
-                                                                  self.dataLoader.labels,
-                                                                  train_size=0.8)
+        # trainImg, valImg, trainLabel, valLabel = train_test_split(self.dataLoader.X_train,
+        #                                                           self.dataLoader.labels,
+        #                                                           train_size=0.8)
+        
+        trainImg = self.dataLoader.X_train
+        trainLabel = self.dataLoader.labels
 
         n_split = 10
         kfold = StratifiedKFold(n_splits=n_split, shuffle=True, random_state=16)
@@ -81,20 +84,19 @@ class iceberg_model:
 
         for train_k, test_k in kfold.split(trainImg, trainLabel):
             print('Run ' + str(count + 1) + ' out of ' + str(n_split))
-            self.vgg_model()
 
-            # generator = self.gen.flow(trainImg[train_k], trainLabel[train_k], batch_size=64, seed=55)
+            generator = self.gen.flow(trainImg[train_k], trainLabel[train_k], batch_size=64, seed=55)
             weight_name = "vgg_1220_weights_run_%s.hdf5" % count
             es, msave = self.callbacks(wname=weight_name)
 
             model = self.vgg_model()
 
-            model.fit(trainImg[train_k], trainLabel[train_k],
-                      epochs=100,
-                      steps_per_epoch=24,
-                      verbose=1,
-                      validation_data=(valImg, valLabel),
-                      callbacks=[es])
+            model.fit_generator(generator,
+                                epochs=100,
+                                steps_per_epoch=24,
+                                verbose=1,
+                                validation_data=(trainImg[test_k], trainLabel[test_k]),
+                                callbacks=[es])
 
             scores = model.evaluate(trainImg[test_k], trainLabel[test_k])
             print(scores)
@@ -114,7 +116,8 @@ class iceberg_model:
 
     def train(self):
         trainImg, valImg, trainLabel, valLabel = train_test_split(self.dataLoader.X_train,
-                                                                  self.dataLoader.labels)
+                                                                  self.dataLoader.labels,
+                                                                  train_size=0.8)
         model = self.vgg_model()
         es, msave = self.callbacks(wname=self.run_weight_name)
         model.fit(trainImg, trainLabel,
