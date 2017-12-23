@@ -141,7 +141,7 @@ class iceberg_model:
             for i in range(len(predValues)):
                 if predValues[i] < 0.05 or predValues[i] > 0.95:
                     tmp = np.ndarray((1, 75, 75, 3))
-                    tmp[:, :, :, :] = tImg[i]
+                    tmp[:, :, :, :] = testLoader.X_train[i]
                     tImg = np.concatenate((tImg, tmp))
                     tAngle = np.append(tAngle, testLoader.inc_angle[i])
                     tLabel = np.append(tLabel, predValues[i] > 0.5)
