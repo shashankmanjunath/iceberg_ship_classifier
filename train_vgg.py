@@ -71,16 +71,17 @@ class iceberg_model:
         return es, msave
 
     def kFoldValidation(self):
-        # trainImg, valImg, trainLabel, valLabel = train_test_split(self.dataLoader.X_train,
-        #                                                           self.dataLoader.labels,
-        #                                                           train_size=0.8)
+        trainImg, valImg, trainLabel, valLabel, trainAngle, valAngle = train_test_split(self.dataLoader.X_train,
+                                                                                        self.dataLoader.labels,
+                                                                                        self.dataLoader.inc_angle,
+                                                                                        train_size=0.8)
 
-        trainImg = self.dataLoader.X_train
-        trainLabel = self.dataLoader.labels
-        trainAngle = self.dataLoader.inc_angle
+        # trainImg = self.dataLoader.X_train
+        # trainLabel = self.dataLoader.labels
+        # trainAngle = self.dataLoader.inc_angle
 
         n_split = 10
-        kfold = StratifiedKFold(n_splits=n_split, shuffle=True, random_state=16)
+        kfold = StratifiedKFold(n_splits=n_split, shuffle=True, random_state=21)
         count = 0
         loss = []
 
@@ -97,7 +98,7 @@ class iceberg_model:
                                 epochs=100,
                                 steps_per_epoch=24,
                                 verbose=1,
-                                validation_data=([trainImg[test_k], trainAngle[test_k]], trainLabel[test_k]),
+                                validation_data=([valImg, valAngle], valLabel),
                                 callbacks=[es])
 
             scores = model.evaluate([trainImg[test_k], trainAngle[test_k]], trainLabel[test_k])
@@ -264,4 +265,4 @@ if __name__ == '__main__':
     # data_path = '../icebergClassifier/data_train/train.json'
     # data_test = '../icebergClassifier/data_test/test.json'
     x = iceberg_model(data_path)
-    x.pseudoLabelingValidation(data_test)
+    x.kFoldValidation()
