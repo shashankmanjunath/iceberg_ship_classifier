@@ -20,7 +20,7 @@ class iceberg_model:
 
         self.model = self.vgg_model()
         self.train_test_split_val = 0.8
-        self.run_weight_name = 'vgg_1221.hdf5'
+        self.run_weight_name = 'vgg_pl_1223.hdf5'
         self.gen = ImageDataGenerator(horizontal_flip=True,
                                       vertical_flip=True,
                                       width_shift_range=0.,
@@ -138,6 +138,8 @@ class iceberg_model:
 
             predValues = model.predict([testLoader.X_train, testLoader.inc_angle])
 
+            print('Fold ' + str(count) + ' training 1 completed. Psuedolabeling test data.......')
+
             for i in range(len(predValues)):
                 if predValues[i] < 0.05 or predValues[i] > 0.95:
                     tmp = np.ndarray((1, 75, 75, 3))
@@ -151,9 +153,11 @@ class iceberg_model:
                                                                           tAngle,
                                                                           train_size=0.8)
 
+            print('Fold ' + str(count) + ' training 2 commencing...')
+
             model_2 = self.vgg_model()
             es, _ = self.callbacks(wname=self.run_weight_name)
-            model_2.fit([trainImg, trainAngle], trainLabel,
+            model_2.fit([tImg, tAngle], tLabel,
                          epochs=100,
                          validation_data=([vImg, vAngle], vLabel),
                          verbose=1,
@@ -173,6 +177,45 @@ class iceberg_model:
 
         print("Loss: " + str(np.mean(loss)), str(np.std(loss)))
         print("")
+        return 0
+
+    def pseudoLabelTrain(self, test_path):
+        trainImg = self.dataLoader.X_train
+        trainLabel = self.dataLoader.labels
+        trainAngle = self.dataLoader.inc_angle
+
+        self.train()
+        testLoader = loader(test_path)
+        model = self.vgg_model()
+        model.load_weights(self.run_weight_name)
+        predValues = model.predict([testLoader.X_train, testLoader.inc_angle])
+
+        for i in range(len(predValues)):
+            if predValues[i] < 0.05 or predValues[i] > 0.95:
+                tmp = np.ndarray((1, 75, 75, 3))
+                tmp[:, :, :, :] = testLoader.X_train[i]
+                trainImg = np.concatenate((trainImg, tmp))
+                trainAngle = np.append(trainAngle, testLoader.inc_angle[i])
+                trainLabel = np.append(trainLabel, predValues[i] > 0.5)
+
+        tImg, vImg, tLabel, vLabel, tAngle, vAngle = train_test_split(trainImg,
+                                                                      trainLabel,
+                                                                      trainAngle,
+                                                                      train_size=0.8)
+
+        model_2 = self.vgg_model()
+        es, msave = self.callbacks(wname=self.run_weight_name)
+        model_2.fit([tImg, tAngle], tLabel,
+                    epochs=100,
+                    validation_data=([vImg, vAngle], vLabel),
+                    verbose=1,
+                    callbacks=[es, msave])
+
+        pred = model_2.predict(testLoader.X_train)
+        submission = pd.DataFrame()
+        submission['id'] = testLoader.id
+        submission['is_iceberg'] = pred.reshape((pred.shape[0]))
+        submission.to_csv('sub_vgg_pl_1223.csv', index=False)
         return 0
 
     def train(self):
