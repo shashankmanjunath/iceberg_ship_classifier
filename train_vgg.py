@@ -10,6 +10,7 @@ from sklearn.model_selection import StratifiedKFold
 from keras.applications.vgg16 import VGG16
 from keras.preprocessing.image import ImageDataGenerator
 from sklearn.model_selection import train_test_split
+import os
 
 class iceberg_model:
     def __init__(self, dataPath):
@@ -113,45 +114,65 @@ class iceberg_model:
         print("Loss: " + str(np.mean(loss)), str(np.std(loss)))
         print("")
 
-    def pseudoLabeling(self, test_path):
-        self.train()
-        testLoader = loader(test_path)
-        model = self.vgg_model()
-        model.load_weights(self.run_weight_name)
-        predValues = model.predict([testLoader.X_train, testLoader.inc_angle])
-
+    def pseudoLabelingValidation(self, test_path):
         trainImg = self.dataLoader.X_train
-        trainAngle = self.dataLoader.inc_angle
         trainLabel = self.dataLoader.labels
+        trainAngle = self.dataLoader.inc_angle
 
-        for i in range(len(predValues)):
-            if predValues[i] < 0.05 or predValues[i] > 0.95:
-                tmp = np.ndarray((1, 75, 75, 3))
-                tmp[:, :, :, :] = testLoader.X_train[i]
-                trainImg = np.concatenate((trainImg, tmp))
-                trainAngle = np.append(trainAngle, testLoader.inc_angle[i])
-                trainLabel = np.append(trainLabel, predValues[i] > 0.5)
-                
-        trainImg, valImg, trainLabel, valLabel, trainAngle, valAngle = train_test_split(trainImg,
-                                                                                        trainLabel,
-                                                                                        trainAngle,
-                                                                                        train_size=0.8)
-        print(trainImg.shape, trainLabel.shape, trainAngle.shape)
-        print(valImg.shape, valLabel.shape, valAngle.shape)
-        print(self.dataLoader.X_train.shape, trainImg.shape)
+        n_split = 5
+        kfold = StratifiedKFold(n_splits=n_split, shuffle=True, random_state=16)
+        count = 0
+        loss = []
 
-        model = self.vgg_model()
-        es, msave = self.callbacks(wname=self.run_weight_name)
-        model.fit([trainImg, trainAngle], trainLabel,
-                  epochs=50,
-                  validation_data=([valImg, valAngle], valLabel),
-                  verbose=1,
-                  callbacks=[es, msave])
+        for train_k, test_k in kfold.split(trainImg, trainLabel):
+            print('Run ' + str(count + 1) + ' out of ' + str(n_split))
 
-        pseudoData = pd.DataFrame()
-        pseudoData['id'] = testLoader.id
-        pseudoData['is_iceberg'] = predValues.reshape((predValues.shape[0]))
-        pseudoData.to_csv('pseudoLabel.csv', index=False)
+            tImg = trainImg[train_k]
+            tLabel = trainLabel[train_k]
+            tAngle = trainAngle[train_k]
+
+            self.train()
+            testLoader = loader(test_path)
+            model = self.vgg_model()
+            model.load_weights(self.run_weight_name)
+
+            predValues = model.predict([testLoader.X_train, testLoader.inc_angle])
+
+            for i in range(len(predValues)):
+                if predValues[i] < 0.05 or predValues[i] > 0.95:
+                    tmp = np.ndarray((1, 75, 75, 3))
+                    tmp[:, :, :, :] = tImg[i]
+                    tImg = np.concatenate((tImg, tmp))
+                    tAngle = np.append(tAngle, testLoader.inc_angle[i])
+                    tLabel = np.append(tLabel, predValues[i] > 0.5)
+
+            tImg, vImg, tLabel, vLabel, tAngle, vAngle = train_test_split(tImg,
+                                                                          tLabel,
+                                                                          tAngle,
+                                                                          train_size=0.8)
+
+            model_2 = self.vgg_model()
+            es, _ = self.callbacks(wname=self.run_weight_name)
+            model_2.fit([trainImg, trainAngle], trainLabel,
+                         epochs=100,
+                         validation_data=([vImg, vAngle], vLabel),
+                         verbose=1,
+                         callbacks=[es])
+
+            scores = model_2.evaluate([trainImg[test_k], trainAngle[test_k]], trainLabel[test_k])
+            print(scores)
+            loss.append(scores[0])
+            count += 1
+            os.remove(self.run_weight_name)
+
+        print("")
+        print("Length of scores: " + str(len(loss)))
+
+        for i in range(len(loss)):
+            print("Run " + str(i + 1) + ": " + str(loss[i]))
+
+        print("Loss: " + str(np.mean(loss)), str(np.std(loss)))
+        print("")
         return 0
 
     def train(self):
@@ -163,7 +184,7 @@ class iceberg_model:
         model = self.vgg_model()
         es, msave = self.callbacks(wname=self.run_weight_name)
         model.fit([trainImg, trainAngle], trainLabel,
-                  epochs=50,
+                  epochs=100,
                   validation_data=([valImg, valAngle], valLabel),
                   verbose=1,
                   callbacks=[es, msave])
@@ -200,4 +221,4 @@ if __name__ == '__main__':
     # data_path = '../icebergClassifier/data_train/train.json'
     # data_test = '../icebergClassifier/data_test/test.json'
     x = iceberg_model(data_path)
-    x.pseudoLabeling(data_test)
+    x.pseudoLabelingValidation(data_test)
