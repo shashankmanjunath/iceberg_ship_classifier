@@ -162,11 +162,13 @@ class iceberg_model:
 
             model_2 = self.vgg_model()
             es, _ = self.callbacks(wname=self.run_weight_name)
-            model_2.fit([tImg, tAngle], tLabel,
-                         epochs=500,
-                         validation_data=([valImg, valAngle], valLabel),
-                         verbose=1,
-                         callbacks=[es])
+            generator_2 = self.gen_flow(tImg, tAngle, tLabel)
+            model_2.fit_generator(generator_2,
+                                  epochs=500,
+                                  steps_per_epoch=24,
+                                  verbose=1,
+                                  validation_data=([valImg, valAngle], valLabel),
+                                  callbacks=[es])
 
             scores = model_2.evaluate([trainImg[test_k], trainAngle[test_k]], trainLabel[test_k])
             print(scores)
