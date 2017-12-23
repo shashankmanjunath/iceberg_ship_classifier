@@ -66,7 +66,7 @@ class iceberg_model:
             # yield X1i[0], X1i[1]
 
     def callbacks(self, wname):
-        es = EarlyStopping("val_loss", patience=50, mode="min")
+        es = EarlyStopping("val_loss", patience=25, mode="min")
         msave = ModelCheckpoint(filepath=wname, save_best_only=True)
         return es, msave
 
@@ -140,7 +140,7 @@ class iceberg_model:
             model = self.vgg_model()
 
             model.fit_generator(generator,
-                                epochs=100,
+                                epochs=500,
                                 steps_per_epoch=24,
                                 verbose=1,
                                 validation_data=([valImg, valAngle], valLabel),
@@ -163,7 +163,7 @@ class iceberg_model:
             model_2 = self.vgg_model()
             es, _ = self.callbacks(wname=self.run_weight_name)
             model_2.fit([tImg, tAngle], tLabel,
-                         epochs=100,
+                         epochs=500,
                          validation_data=([valImg, valAngle], valLabel),
                          verbose=1,
                          callbacks=[es])
@@ -172,7 +172,6 @@ class iceberg_model:
             print(scores)
             loss.append(scores[0])
             count += 1
-            os.remove(self.run_weight_name)
 
         for i in range(len(loss)):
             print("Run " + str(i + 1) + ": " + str(loss[i]))
@@ -189,7 +188,8 @@ class iceberg_model:
         testLoader = loader(test_path)
         model = self.vgg_model()
         model.load_weights(self.run_weight_name)
-        predValues = model.predict([testLoader.X_train, testLoader.inc_angle])
+        predValues = model.predict([testLoader.X_train, testLoader.inc_angle],
+                                   verbose=1)
 
         for i in range(len(predValues)):
             if predValues[i] < 0.05 or predValues[i] > 0.95:
@@ -265,4 +265,4 @@ if __name__ == '__main__':
     # data_path = '../icebergClassifier/data_train/train.json'
     # data_test = '../icebergClassifier/data_test/test.json'
     x = iceberg_model(data_path)
-    x.kFoldValidation()
+    x.pseudoLabelingValidation(data_test)
