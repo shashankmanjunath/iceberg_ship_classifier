@@ -220,7 +220,7 @@ class iceberg_model:
                               validation_data=([valImg, valAngle], valLabel),
                               callbacks=[es])
 
-        pred = model_2.predict(testLoader.X_train)
+        pred = model_2.predict([testLoader.X_train, testLoader.inc_angle])
         submission = pd.DataFrame()
         submission['id'] = testLoader.id
         submission['is_iceberg'] = pred.reshape((pred.shape[0]))
