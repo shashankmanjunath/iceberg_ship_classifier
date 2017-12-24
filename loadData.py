@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
 import cv2
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 
 class loader:
     def __init__(self, data_path, split_pct=0.75):
@@ -49,6 +49,13 @@ class loader:
         valAngle_more = np.concatenate([valAngle, valAngle, valAngle])
 
         return trainImg_more, valImg_more, trainLabel_more, valLabel_more, trainAngle_more, valAngle_more
+
+    def median_filter(self):
+        for i in range(self.X_train.shape[0]):
+            self.X_train[i, :, :, 0] = cv2.medianBlur(self.X_train[i, :, :, 0], 3)
+            self.X_train[i, :, :, 1] = cv2.medianBlur(self.X_train[i, :, :, 1], 3)
+            self.X_train[i, :, :, 2] = cv2.medianBlur(self.X_train[i, :, :, 2], 3)
+
 
 
 def get_more_images(imgs):

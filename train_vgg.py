@@ -117,14 +117,17 @@ class iceberg_model:
 
     def pseudoLabelingValidation(self, test_path):
         testLoader = loader(test_path)
+        testLoader.median_filter()
+        trainLoader = self.dataLoader
+        trainLoader.median_filter()
         n_split = 5
         kfold = StratifiedKFold(n_splits=n_split, shuffle=True, random_state=16)
         count = 0
         loss = []
 
-        trainImg, valImg, trainLabel, valLabel, trainAngle, valAngle = train_test_split(self.dataLoader.X_train,
-                                                                                        self.dataLoader.labels,
-                                                                                        self.dataLoader.inc_angle,
+        trainImg, valImg, trainLabel, valLabel, trainAngle, valAngle = train_test_split(trainLoader.X_train,
+                                                                                        trainLoader.labels,
+                                                                                        trainLoader.inc_angle,
                                                                                         train_size=0.8)
 
         for train_k, test_k in kfold.split(trainImg, trainLabel):
