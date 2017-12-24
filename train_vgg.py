@@ -10,7 +10,7 @@ from sklearn.model_selection import StratifiedKFold
 from keras.applications.vgg16 import VGG16
 from keras.preprocessing.image import ImageDataGenerator
 from sklearn.model_selection import train_test_split
-import os
+import cv2
 
 class iceberg_model:
     def __init__(self, dataPath):
@@ -76,10 +76,6 @@ class iceberg_model:
                                                                                         self.dataLoader.inc_angle,
                                                                                         train_size=0.8)
 
-        # trainImg = self.dataLoader.X_train
-        # trainLabel = self.dataLoader.labels
-        # trainAngle = self.dataLoader.inc_angle
-
         n_split = 10
         kfold = StratifiedKFold(n_splits=n_split, shuffle=True, random_state=21)
         count = 0
@@ -88,7 +84,9 @@ class iceberg_model:
         for train_k, test_k in kfold.split(trainImg, trainLabel):
             print('Run ' + str(count + 1) + ' out of ' + str(n_split))
 
-            generator = self.gen_flow(trainImg[train_k], trainAngle[train_k], trainLabel[train_k])
+            tImg = median_filter(trainImg[train_k])
+
+            generator = self.gen_flow(tImg, trainAngle[train_k], trainLabel[train_k])
             weight_name = "vgg_1220_weights_run_%s.hdf5" % count
             es, msave = self.callbacks(wname=weight_name)
 
@@ -101,7 +99,7 @@ class iceberg_model:
                                 validation_data=([valImg, valAngle], valLabel),
                                 callbacks=[es])
 
-            scores = model.evaluate([trainImg[test_k], trainAngle[test_k]], trainLabel[test_k])
+            scores = model.evaluate([tImg[test_k], trainAngle[test_k]], trainLabel[test_k])
             print(scores)
             loss.append(scores[0])
             count += 1
@@ -270,10 +268,15 @@ class iceberg_model:
         submission.to_csv('sub_vgg_1220.csv', index=False)
 
 
+def median_filter(imgStack):
+    for i in range(imgStack.shape[0]):
+        imgStack[i] = cv2.medianBlur(imgStack[i], 3)
+    return imgStack
+
 if __name__ == '__main__':
     data_path = '../iceberg_ship_classifier/data_train/train.json'
     data_test = '../iceberg_ship_classifier/data_test/test.json'
     # data_path = '../icebergClassifier/data_train/train.json'
     # data_test = '../icebergClassifier/data_test/test.json'
     x = iceberg_model(data_path)
-    x.pseudoLabelTrain(data_test)
+    x.kFoldValidation(data_test)
