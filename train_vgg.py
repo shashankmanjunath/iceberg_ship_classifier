@@ -55,6 +55,27 @@ class iceberg_model:
                       metrics=['accuracy'])
         return model
 
+    def vgg_model_no_angle(self):
+        base_model = VGG16(weights='imagenet', include_top=False,
+                           input_shape=self.dataLoader.X_train.shape[1:], classes=1)
+        x = base_model.get_layer('block5_pool').output
+
+        x = GlobalMaxPooling2D()(x)
+        merge_one = Dense(512, activation='relu', name='fc2')(x)
+        merge_one = Dropout(0.3)(merge_one)
+        merge_one = Dense(512, activation='relu', name='fc3')(merge_one)
+        merge_one = Dropout(0.3)(merge_one)
+
+        predictions = Dense(1, activation='sigmoid')(merge_one)
+
+        model = Model(input=base_model.input, output=predictions)
+
+        sgd = SGD(lr=1e-3, decay=1e-6, momentum=0.9, nesterov=True)
+        model.compile(loss='binary_crossentropy',
+                      optimizer=sgd,
+                      metrics=['accuracy'])
+        return model
+
     def gen_flow(self, X1, X2, y):
         batch_size=64
         genX1 = self.gen.flow(X1, y, batch_size=batch_size, seed=55)
@@ -71,10 +92,9 @@ class iceberg_model:
         return es, msave
 
     def kFoldValidation(self):
-        trainImg, valImg, trainLabel, valLabel, trainAngle, valAngle = train_test_split(self.dataLoader.X_train,
-                                                                                        self.dataLoader.labels,
-                                                                                        self.dataLoader.inc_angle,
-                                                                                        train_size=0.8)
+        trainImg, valImg, trainLabel, valLabel = train_test_split(self.dataLoader.X_train,
+                                                                  self.dataLoader.labels,
+                                                                  train_size=0.8)
 
         n_split = 10
         kfold = StratifiedKFold(n_splits=n_split, shuffle=True, random_state=21)
@@ -84,22 +104,20 @@ class iceberg_model:
         for train_k, test_k in kfold.split(trainImg, trainLabel):
             print('Run ' + str(count + 1) + ' out of ' + str(n_split))
 
-            tImg = median_filter(trainImg[train_k])
-
-            generator = self.gen_flow(tImg, trainAngle[train_k], trainLabel[train_k])
+            generator = self.gen.flow(trainImg[train_k], trainLabel[train_k])
             weight_name = "vgg_1220_weights_run_%s.hdf5" % count
             es, msave = self.callbacks(wname=weight_name)
 
-            model = self.vgg_model()
+            model = self.vgg_model_no_angle()
 
             model.fit_generator(generator,
-                                epochs=100,
+                                epochs=500,
                                 steps_per_epoch=24,
                                 verbose=1,
-                                validation_data=([valImg, valAngle], valLabel),
+                                validation_data=(valImg, valLabel),
                                 callbacks=[es])
 
-            scores = model.evaluate([trainImg[test_k], trainAngle[test_k]], trainLabel[test_k])
+            scores = model.evaluate(trainImg[test_k], trainLabel[test_k])
             print(scores)
             loss.append(scores[0])
             count += 1
