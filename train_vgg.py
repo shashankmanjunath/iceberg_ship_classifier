@@ -99,7 +99,7 @@ class iceberg_model:
                                 validation_data=([valImg, valAngle], valLabel),
                                 callbacks=[es])
 
-            scores = model.evaluate([tImg[test_k], trainAngle[test_k]], trainLabel[test_k])
+            scores = model.evaluate([trainImg[test_k], trainAngle[test_k]], trainLabel[test_k])
             print(scores)
             loss.append(scores[0])
             count += 1
@@ -279,4 +279,4 @@ if __name__ == '__main__':
     # data_path = '../icebergClassifier/data_train/train.json'
     # data_test = '../icebergClassifier/data_test/test.json'
     x = iceberg_model(data_path)
-    x.kFoldValidation(data_test)
+    x.kFoldValidation()
