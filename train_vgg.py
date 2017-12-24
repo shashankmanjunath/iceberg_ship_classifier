@@ -112,6 +112,7 @@ class iceberg_model:
 
             model.fit_generator(generator,
                                 epochs=500,
+                                steps_per_epoch=24,
                                 verbose=1,
                                 validation_data=([valImg, valAngle], valLabel),
                                 callbacks=[es])
