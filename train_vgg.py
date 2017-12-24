@@ -104,18 +104,16 @@ class iceberg_model:
         for train_k, test_k in kfold.split(trainImg, trainLabel):
             print('Run ' + str(count + 1) + ' out of ' + str(n_split))
 
-            generator = self.gen.flow(trainImg[train_k], trainLabel[train_k])
             weight_name = "vgg_1220_weights_run_%s.hdf5" % count
             es, msave = self.callbacks(wname=weight_name)
 
             model = self.vgg_model_no_angle()
 
-            model.fit_generator(generator,
-                                epochs=500,
-                                steps_per_epoch=24,
-                                verbose=1,
-                                validation_data=(valImg, valLabel),
-                                callbacks=[es])
+            model.fit(trainImg[train_k], trainLabel[train_k],
+                      epochs=500,
+                      verbose=1,
+                      validation_data=(valImg, valLabel),
+                      callbacks=[es])
 
             scores = model.evaluate(trainImg[test_k], trainLabel[test_k])
             print(scores)
