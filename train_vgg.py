@@ -117,7 +117,7 @@ class iceberg_model:
                                 validation_data=([valImg, valAngle], valLabel),
                                 callbacks=[es])
 
-            scores = model.evaluate(trainImg[test_k], trainLabel[test_k])
+            scores = model.evaluate([trainImg[test_k], trainAngle[test_k]], trainLabel[test_k])
             print(scores)
             loss.append(scores[0])
             count += 1
