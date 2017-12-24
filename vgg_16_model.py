@@ -5,10 +5,10 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import log_loss
 from sklearn.model_selection import StratifiedKFold, StratifiedShuffleSplit
 
-# train = pd.read_json("../iceberg_ship_classifier/data_train/train.json")
-# test = pd.read_json("../iceberg_ship_classifier/data_test/test.json")
-train = pd.read_json("../icebergClassifier/data_train/train.json")
-test = pd.read_json("../icebergClassifier/data_test/test.json")
+train = pd.read_json("../iceberg_ship_classifier/data_train/train.json")
+test = pd.read_json("../iceberg_ship_classifier/data_test/test.json")
+# train = pd.read_json("../icebergClassifier/data_train/train.json")
+# test = pd.read_json("../icebergClassifier/data_test/test.json")
 target_train=train['is_iceberg']
 
 
@@ -110,7 +110,7 @@ def getVggAngleModel():
 
 # Using K-fold Cross Validation with Data Augmentation.
 def myAngleCV(X_train, X_angle, X_test):
-    K = 3
+    K = 10
     folds = list(StratifiedKFold(n_splits=K, shuffle=True, random_state=16).split(X_train, target_train))
     y_test_pred_log = 0
     y_train_pred_log = 0
