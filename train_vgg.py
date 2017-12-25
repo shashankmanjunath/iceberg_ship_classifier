@@ -92,10 +92,9 @@ class iceberg_model:
         return es, msave
 
     def kFoldValidation(self):
-        trainImg, valImg, trainLabel, valLabel, trainAngle, valAngle = train_test_split(self.dataLoader.X_train,
-                                                                                        self.dataLoader.labels,
-                                                                                        self.dataLoader.inc_angle,
-                                                                                        train_size=0.8)
+        trainImg, valImg, trainLabel, valLabel = train_test_split(self.dataLoader.X_train,
+                                                                  self.dataLoader.labels,
+                                                                  train_size=0.8)
 
         n_split = 10
         kfold = StratifiedKFold(n_splits=n_split, shuffle=True, random_state=21)
@@ -107,17 +106,18 @@ class iceberg_model:
 
             weight_name = "vgg_1220_weights_run_%s.hdf5" % count
             es, msave = self.callbacks(wname=weight_name)
-            generator = self.gen_flow(trainImg[train_k], trainAngle[train_k], trainLabel[train_k])
-            model = self.vgg_model()
+            # generator = self.gen_flow(trainImg[train_k], trainAngle[train_k], trainLabel[train_k])
+            generator = self.gen.flow(trainImg[train_k], trainLabel[train_k])
+            model = self.vgg_model_no_angle()
 
             model.fit_generator(generator,
                                 epochs=500,
                                 steps_per_epoch=24,
                                 verbose=1,
-                                validation_data=([valImg, valAngle], valLabel),
+                                validation_data=(valImg, valLabel),
                                 callbacks=[es])
 
-            scores = model.evaluate([trainImg[test_k], trainAngle[test_k]], trainLabel[test_k])
+            scores = model.evaluate(trainImg[test_k], trainLabel[test_k])
             print(scores)
             loss.append(scores[0])
             count += 1
