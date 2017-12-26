@@ -87,7 +87,7 @@ class iceberg_model:
             # yield X1i[0], X1i[1]
 
     def callbacks(self, wname):
-        es = EarlyStopping("val_loss", patience=25, mode="min")
+        es = EarlyStopping("val_loss", patience=40, mode="min")
         msave = ModelCheckpoint(filepath=wname, save_best_only=True)
         return es, msave
 
@@ -176,7 +176,8 @@ class iceberg_model:
 
             print('Fold ' + str(count) + ' training 2 commencing...')
 
-            model_2 = self.vgg_model()
+            model_2 = self.vgg_model_no_angle()
+
             es, _ = self.callbacks(wname=self.run_weight_name)
             generator_2 = self.gen.flow(tImg, tLabel)
             model_2.fit_generator(generator_2,
