@@ -141,31 +141,29 @@ class iceberg_model:
         count = 0
         loss = []
 
-        trainImg, valImg, trainLabel, valLabel, trainAngle, valAngle = train_test_split(trainLoader.X_train,
-                                                                                        trainLoader.labels,
-                                                                                        trainLoader.inc_angle,
-                                                                                        train_size=0.8)
+        trainImg, valImg, trainLabel, valLabel = train_test_split(trainLoader.X_train,
+                                                                  trainLoader.labels,
+                                                                  train_size=0.8)
 
         for train_k, test_k in kfold.split(trainImg, trainLabel):
             print('Run ' + str(count + 1) + ' out of ' + str(n_split))
 
             tImg = trainImg[train_k]
             tLabel = trainLabel[train_k]
-            tAngle = trainAngle[train_k]
 
-            generator = self.gen_flow(tImg, tAngle, tLabel)
+            generator = self.gen.flow(tImg, tLabel)
             es, msave = self.callbacks(wname=self.run_weight_name)
 
-            model = self.vgg_model()
+            model = self.vgg_model_no_angle()
 
             model.fit_generator(generator,
                                 epochs=500,
                                 steps_per_epoch=24,
                                 verbose=1,
-                                validation_data=([valImg, valAngle], valLabel),
+                                validation_data=(valImg, valLabel),
                                 callbacks=[es])
 
-            predValues = model.predict([testLoader.X_train, testLoader.inc_angle])
+            predValues = model.predict(testLoader.X_train)
 
             print('Fold ' + str(count) + ' training 1 completed. Psuedolabeling test data.......')
 
@@ -174,22 +172,21 @@ class iceberg_model:
                     tmp = np.ndarray((1, 75, 75, 3))
                     tmp[:, :, :, :] = testLoader.X_train[i]
                     tImg = np.concatenate((tImg, tmp))
-                    tAngle = np.append(tAngle, testLoader.inc_angle[i])
                     tLabel = np.append(tLabel, predValues[i] > 0.5)
 
             print('Fold ' + str(count) + ' training 2 commencing...')
 
             model_2 = self.vgg_model()
             es, _ = self.callbacks(wname=self.run_weight_name)
-            generator_2 = self.gen_flow(tImg, tAngle, tLabel)
+            generator_2 = self.gen.flow(tImg, tLabel)
             model_2.fit_generator(generator_2,
                                   epochs=500,
                                   steps_per_epoch=24,
                                   verbose=1,
-                                  validation_data=([valImg, valAngle], valLabel),
+                                  validation_data=(valImg, valLabel),
                                   callbacks=[es])
 
-            scores = model_2.evaluate([trainImg[test_k], trainAngle[test_k]], trainLabel[test_k])
+            scores = model_2.evaluate(trainImg[test_k], trainLabel[test_k])
             print(scores)
             loss.append(scores[0])
             count += 1
@@ -297,4 +294,4 @@ if __name__ == '__main__':
     # data_path = '../icebergClassifier/data_train/train.json'
     # data_test = '../icebergClassifier/data_test/test.json'
     x = iceberg_model(data_path)
-    x.kFoldValidation()
+    x.pseudoLabelingValidation(data_test)
