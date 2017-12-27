@@ -136,7 +136,7 @@ class iceberg_model:
         testLoader.median_filter()
         trainLoader = self.dataLoader
         trainLoader.median_filter()
-        n_split = 5
+        n_split = 10
         kfold = StratifiedKFold(n_splits=n_split, shuffle=True, random_state=16)
         count = 0
         loss = []
