@@ -199,24 +199,23 @@ class iceberg_model:
         return 0
 
     def pseudoLabelTrain(self, test_path):
-        trainImg, valImg, trainLabel, valLabel, trainAngle, valAngle = train_test_split(self.dataLoader.X_train,
-                                                                                        self.dataLoader.labels,
-                                                                                        self.dataLoader.inc_angle,
-                                                                                        train_size=0.8)
+        trainImg, valImg, trainLabel, valLabel = train_test_split(self.dataLoader.X_train,
+                                                                  self.dataLoader.labels,
+                                                                  train_size=0.8)
         testLoader = loader(test_path)
-        generator = self.gen_flow(trainImg, trainAngle, trainLabel)
+        generator = self.gen.flow(trainImg, trainLabel)
         es, msave = self.callbacks(wname=self.run_weight_name)
 
-        model = self.vgg_model()
+        model = self.vgg_model_no_angle()
 
         model.fit_generator(generator,
                             epochs=500,
                             steps_per_epoch=24,
                             verbose=1,
-                            validation_data=([valImg, valAngle], valLabel),
+                            validation_data=(valImg, valLabel),
                             callbacks=[es])
 
-        predValues = model.predict([testLoader.X_train, testLoader.inc_angle],
+        predValues = model.predict(testLoader.X_train,
                                    verbose=1)
 
         for i in range(len(predValues)):
@@ -224,20 +223,20 @@ class iceberg_model:
                 tmp = np.ndarray((1, 75, 75, 3))
                 tmp[:, :, :, :] = testLoader.X_train[i]
                 trainImg = np.concatenate((trainImg, tmp))
-                trainAngle = np.append(trainAngle, testLoader.inc_angle[i])
+                # trainAngle = np.append(trainAngle, testLoader.inc_angle[i])
                 trainLabel = np.append(trainLabel, predValues[i] > 0.5)
 
-        model_2 = self.vgg_model()
+        model_2 = self.vgg_model_no_angle()
         es, _ = self.callbacks(wname=self.run_weight_name)
-        generator_2 = self.gen_flow(trainImg, trainAngle, trainLabel)
+        generator_2 = self.gen.flow(trainImg, trainLabel)
         model_2.fit_generator(generator_2,
                               epochs=500,
                               steps_per_epoch=24,
                               verbose=1,
-                              validation_data=([valImg, valAngle], valLabel),
-                              callbacks=[es])
+                              validation_data=(valImg, valLabel),
+                              callbacks=[es, msave])
 
-        pred = model_2.predict([testLoader.X_train, testLoader.inc_angle])
+        pred = model_2.predict(testLoader.X_train)
         submission = pd.DataFrame()
         submission['id'] = testLoader.id
         submission['is_iceberg'] = pred.reshape((pred.shape[0]))
