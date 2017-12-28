@@ -87,7 +87,7 @@ class iceberg_model:
             # yield X1i[0], X1i[1]
 
     def callbacks(self, wname):
-        es = EarlyStopping("val_loss", patience=40, mode="min")
+        es = EarlyStopping("val_loss", patience=200, mode="min")
         msave = ModelCheckpoint(filepath=wname, save_best_only=True)
         return es, msave
 
@@ -168,7 +168,7 @@ class iceberg_model:
             print('Fold ' + str(count) + ' training 1 completed. Psuedolabeling test data.......')
 
             for i in range(len(predValues)):
-                if predValues[i] < 0.05 or predValues[i] > 0.95:
+                if predValues[i] < 0.15 or predValues[i] > 0.85:
                     tmp = np.ndarray((1, 75, 75, 3))
                     tmp[:, :, :, :] = testLoader.X_train[i]
                     tImg = np.concatenate((tImg, tmp))
