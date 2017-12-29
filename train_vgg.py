@@ -294,4 +294,4 @@ if __name__ == '__main__':
     # data_path = '../icebergClassifier/data_train/train.json'
     # data_test = '../icebergClassifier/data_test/test.json'
     x = iceberg_model(data_path)
-    x.pseudoLabelTrain(data_test)
+    x.pseudoLabelingValidation(data_test)
