@@ -136,7 +136,7 @@ class iceberg_model:
         testLoader.median_filter()
         trainLoader = self.dataLoader
         trainLoader.median_filter()
-        n_split = 10
+        n_split = 1 # 10
         kfold = StratifiedKFold(n_splits=n_split, shuffle=True, random_state=16)
         count = 0
         loss = []
@@ -148,11 +148,14 @@ class iceberg_model:
         for train_k, test_k in kfold.split(trainImg, trainLabel):
             print('Run ' + str(count + 1) + ' out of ' + str(n_split))
 
+            run_wname = 'run_%s_weights.hdf5' % count
+            print('Run weight name: ' + str(run_wname))
+
             tImg = trainImg[train_k]
             tLabel = trainLabel[train_k]
 
             generator = self.gen.flow(tImg, tLabel)
-            es, msave = self.callbacks(wname=self.run_weight_name)
+            es, msave = self.callbacks(wname=run_wname)
 
             model = self.vgg_model_no_angle()
 
@@ -185,7 +188,7 @@ class iceberg_model:
                                   steps_per_epoch=24,
                                   verbose=1,
                                   validation_data=(valImg, valLabel),
-                                  callbacks=[es])
+                                  callbacks=[es, msave])
 
             scores = model_2.evaluate(trainImg[test_k], trainLabel[test_k])
             print(scores)
@@ -196,6 +199,20 @@ class iceberg_model:
             print("Run " + str(i + 1) + ": " + str(loss[i]))
         print("")
         print("Loss Mean: " + str(np.mean(loss)) + " Loss std: " + str(np.std(loss)))
+
+        minInd = loss.index(min(loss))
+        print('Minimum Weight Index: ' + str(minInd))
+
+        bestRunWeight = 'run_%s_weights.hdf5' % minInd
+        bestModel = self.vgg_model_no_angle()
+        bestModel.load_weight(bestRunWeight)
+
+        pred = bestModel.predict(testLoader.X_train)
+        submission = pd.DataFrame()
+        submission['id'] = testLoader.id
+        submission['is_iceberg'] = pred.reshape((pred.shape[0]))
+        submission.to_csv('sub_vgg_pl_1223.csv', index=False)
+
         return 0
 
     def pseudoLabelTrain(self, test_path):
@@ -223,7 +240,6 @@ class iceberg_model:
                 tmp = np.ndarray((1, 75, 75, 3))
                 tmp[:, :, :, :] = testLoader.X_train[i]
                 trainImg = np.concatenate((trainImg, tmp))
-                # trainAngle = np.append(trainAngle, testLoader.inc_angle[i])
                 trainLabel = np.append(trainLabel, predValues[i] > 0.5)
 
         model_2 = self.vgg_model_no_angle()
