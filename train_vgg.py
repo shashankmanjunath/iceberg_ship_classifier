@@ -136,7 +136,7 @@ class iceberg_model:
         testLoader.median_filter()
         trainLoader = self.dataLoader
         trainLoader.median_filter()
-        n_split = 2 # 10
+        n_split = 10
         kfold = StratifiedKFold(n_splits=n_split, shuffle=True, random_state=16)
         count = 0
         loss = []
@@ -211,7 +211,7 @@ class iceberg_model:
         submission = pd.DataFrame()
         submission['id'] = testLoader.id
         submission['is_iceberg'] = pred.reshape((pred.shape[0]))
-        submission.to_csv('sub_vgg_pl_1223.csv', index=False)
+        submission.to_csv('sub_vgg_pl_1230.csv', index=False)
 
         return 0
 
