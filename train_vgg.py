@@ -205,7 +205,7 @@ class iceberg_model:
 
         bestRunWeight = '/scratch/manjuns/iceberg_ship_classifier/run_%s_weights.hdf5' % minInd
         bestModel = self.vgg_model_no_angle()
-        bestModel.load_weight(bestRunWeight)
+        bestModel.load_weights(bestRunWeight)
 
         pred = bestModel.predict(testLoader.X_train)
         submission = pd.DataFrame()
