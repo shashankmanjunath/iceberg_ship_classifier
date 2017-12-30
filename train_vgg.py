@@ -148,7 +148,7 @@ class iceberg_model:
         for train_k, test_k in kfold.split(trainImg, trainLabel):
             print('Run ' + str(count + 1) + ' out of ' + str(n_split))
 
-            run_wname = 'run_%s_weights.hdf5' % count
+            run_wname = '/scratch/manjuns/iceberg_ship_classifier/run_%s_weights.hdf5' % count
             print('Run weight name: ' + str(run_wname))
 
             tImg = trainImg[train_k]
@@ -203,7 +203,7 @@ class iceberg_model:
         minInd = loss.index(min(loss))
         print('Minimum Weight Index: ' + str(minInd))
 
-        bestRunWeight = 'run_%s_weights.hdf5' % minInd
+        bestRunWeight = '/scratch/manjuns/iceberg_ship_classifier/run_%s_weights.hdf5' % minInd
         bestModel = self.vgg_model_no_angle()
         bestModel.load_weight(bestRunWeight)
 
