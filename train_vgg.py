@@ -7,7 +7,8 @@ from keras.layers import concatenate
 from keras.optimizers import Adam, SGD
 from keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
 from sklearn.model_selection import StratifiedKFold
-from keras.applications.vgg16 import VGG16, VGG19
+from keras.applications.vgg16 import VGG16
+from keras.applications.vgg19 import VGG19
 from keras.preprocessing.image import ImageDataGenerator
 from sklearn.model_selection import train_test_split
 import cv2
