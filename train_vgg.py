@@ -55,6 +55,56 @@ class iceberg_model:
                       metrics=['accuracy'])
         return model
 
+    def vgg19_model(self):
+        input = Input(shape=(75, 75, 3))
+
+        x = Conv2D(64, (3, 3), activation='relu', padding='same', name='block1_conv1')(input)
+        x = Conv2D(64, (3, 3), activation='relu', padding='same', name='block1_conv2')(x)
+        x = MaxPooling2D((2, 2), strides=(2, 2), name='block1_pool')(x)
+
+        # Block 2
+        x = Conv2D(128, (3, 3), activation='relu', padding='same', name='block2_conv1')(x)
+        x = Conv2D(128, (3, 3), activation='relu', padding='same', name='block2_conv2')(x)
+        x = MaxPooling2D((2, 2), strides=(2, 2), name='block2_pool')(x)
+
+        # Block 3
+        x = Conv2D(256, (3, 3), activation='relu', padding='same', name='block3_conv1')(x)
+        x = Conv2D(256, (3, 3), activation='relu', padding='same', name='block3_conv2')(x)
+        x = Conv2D(256, (3, 3), activation='relu', padding='same', name='block3_conv3')(x)
+        x = Conv2D(256, (3, 3), activation='relu', padding='same', name='block3_conv4')(x)
+        x = MaxPooling2D((2, 2), strides=(2, 2), name='block3_pool')(x)
+
+        # Block 4
+        x = Conv2D(512, (3, 3), activation='relu', padding='same', name='block4_conv1')(x)
+        x = Conv2D(512, (3, 3), activation='relu', padding='same', name='block4_conv2')(x)
+        x = Conv2D(512, (3, 3), activation='relu', padding='same', name='block4_conv3')(x)
+        x = Conv2D(512, (3, 3), activation='relu', padding='same', name='block4_conv4')(x)
+        x = MaxPooling2D((2, 2), strides=(2, 2), name='block4_pool')(x)
+
+        # Block 5
+        x = Conv2D(512, (3, 3), activation='relu', padding='same', name='block5_conv1')(x)
+        x = Conv2D(512, (3, 3), activation='relu', padding='same', name='block5_conv2')(x)
+        x = Conv2D(512, (3, 3), activation='relu', padding='same', name='block5_conv3')(x)
+        x = Conv2D(512, (3, 3), activation='relu', padding='same', name='block5_conv4')(x)
+        x = MaxPooling2D((2, 2), strides=(2, 2), name='block5_pool')(x)
+
+        x = Dense(512, activation='relu', name='fc2')(x)
+        x = Dropout(0.3)(x)
+        x = Dense(512, activation='relu', name='fc3')(x)
+        x = Dropout(0.3)(x)
+
+        predictions = Dense(1, activation='sigmoid')(x)
+
+        model = Model(input=input, output=predictions)
+
+        opt = Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.0)
+
+        model.compile(loss='binary_crossentropy',
+                      optimizer=opt,
+                      metrics=['accuracy'])
+        return model
+
+
     def vgg_model_no_angle(self):
         base_model = VGG16(weights='imagenet', include_top=False,
                            input_shape=self.dataLoader.X_train.shape[1:], classes=1)
@@ -104,11 +154,11 @@ class iceberg_model:
         for train_k, test_k in kfold.split(trainImg, trainLabel):
             print('Run ' + str(count + 1) + ' out of ' + str(n_split))
 
-            weight_name = "vgg_1220_weights_run_%s.hdf5" % count
+            weight_name = "vgg19_14_weights_run_%s.hdf5" % count
             es, msave = self.callbacks(wname=weight_name)
             # generator = self.gen_flow(trainImg[train_k], trainAngle[train_k], trainLabel[train_k])
             generator = self.gen.flow(trainImg[train_k], trainLabel[train_k])
-            model = self.vgg_model_no_angle()
+            model = self.vgg19_model()
 
             model.fit_generator(generator,
                                 epochs=500,
@@ -310,4 +360,4 @@ if __name__ == '__main__':
     # data_path = '../icebergClassifier/data_train/train.json'
     # data_test = '../icebergClassifier/data_test/test.json'
     x = iceberg_model(data_path)
-    x.pseudoLabelingValidation(data_test)
+    x.kFoldValidation()
