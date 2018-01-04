@@ -7,7 +7,7 @@ from keras.layers import concatenate
 from keras.optimizers import Adam, SGD
 from keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
 from sklearn.model_selection import StratifiedKFold
-from keras.applications.vgg16 import VGG16
+from keras.applications.vgg16 import VGG16, VGG19
 from keras.preprocessing.image import ImageDataGenerator
 from sklearn.model_selection import train_test_split
 import cv2
@@ -56,37 +56,9 @@ class iceberg_model:
         return model
 
     def vgg19_model(self):
-        input = Input(shape=self.dataLoader.X_train.shape[1:])
-
-        x = Conv2D(64, (3, 3), activation='relu', padding='same', name='block1_conv1')(input)
-        x = Conv2D(64, (3, 3), activation='relu', padding='same', name='block1_conv2')(x)
-        x = MaxPooling2D((2, 2), strides=(2, 2), name='block1_pool')(x)
-
-        # Block 2
-        x = Conv2D(128, (3, 3), activation='relu', padding='same', name='block2_conv1')(x)
-        x = Conv2D(128, (3, 3), activation='relu', padding='same', name='block2_conv2')(x)
-        x = MaxPooling2D((2, 2), strides=(2, 2), name='block2_pool')(x)
-
-        # Block 3
-        x = Conv2D(256, (3, 3), activation='relu', padding='same', name='block3_conv1')(x)
-        x = Conv2D(256, (3, 3), activation='relu', padding='same', name='block3_conv2')(x)
-        x = Conv2D(256, (3, 3), activation='relu', padding='same', name='block3_conv3')(x)
-        x = Conv2D(256, (3, 3), activation='relu', padding='same', name='block3_conv4')(x)
-        x = MaxPooling2D((2, 2), strides=(2, 2), name='block3_pool')(x)
-
-        # Block 4
-        x = Conv2D(512, (3, 3), activation='relu', padding='same', name='block4_conv1')(x)
-        x = Conv2D(512, (3, 3), activation='relu', padding='same', name='block4_conv2')(x)
-        x = Conv2D(512, (3, 3), activation='relu', padding='same', name='block4_conv3')(x)
-        x = Conv2D(512, (3, 3), activation='relu', padding='same', name='block4_conv4')(x)
-        x = MaxPooling2D((2, 2), strides=(2, 2), name='block4_pool')(x)
-
-        # Block 5
-        x = Conv2D(512, (3, 3), activation='relu', padding='same', name='block5_conv1')(x)
-        x = Conv2D(512, (3, 3), activation='relu', padding='same', name='block5_conv2')(x)
-        x = Conv2D(512, (3, 3), activation='relu', padding='same', name='block5_conv3')(x)
-        x = Conv2D(512, (3, 3), activation='relu', padding='same', name='block5_conv4')(x)
-        x = MaxPooling2D((2, 2), strides=(2, 2), name='block5_pool')(x)
+        base_model = VGG19(weights='imagenet', include_top=False,
+                           input_shape=self.dataLoader.X_train.shape[1:], classes=1)
+        x = base_model.get_layer('block5_pool').output
 
         x = GlobalMaxPooling2D()(x)
 
