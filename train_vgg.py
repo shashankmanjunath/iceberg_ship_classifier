@@ -88,6 +88,8 @@ class iceberg_model:
         x = Conv2D(512, (3, 3), activation='relu', padding='same', name='block5_conv4')(x)
         x = MaxPooling2D((2, 2), strides=(2, 2), name='block5_pool')(x)
 
+        x = GlobalMaxPooling2D()(x)
+
         x = Dense(512, activation='relu', name='fc2')(x)
         x = Dropout(0.3)(x)
         x = Dense(512, activation='relu', name='fc3')(x)
@@ -163,7 +165,7 @@ class iceberg_model:
                                 epochs=500,
                                 steps_per_epoch=24,
                                 verbose=1,
-                                # validation_data=(valImg, valLabel),
+                                validation_data=(valImg, valLabel),
                                 callbacks=[es])
 
             scores = model.evaluate(trainImg[test_k], trainLabel[test_k])
