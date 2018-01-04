@@ -56,7 +56,7 @@ class iceberg_model:
         return model
 
     def vgg19_model(self):
-        input = Input(shape=(75, 75, 3))
+        input = Input(shape=self.dataLoader.X_train.shape[1:])
 
         x = Conv2D(64, (3, 3), activation='relu', padding='same', name='block1_conv1')(input)
         x = Conv2D(64, (3, 3), activation='relu', padding='same', name='block1_conv2')(x)
@@ -103,7 +103,6 @@ class iceberg_model:
                       optimizer=opt,
                       metrics=['accuracy'])
         return model
-
 
     def vgg_model_no_angle(self):
         base_model = VGG16(weights='imagenet', include_top=False,
@@ -164,7 +163,7 @@ class iceberg_model:
                                 epochs=500,
                                 steps_per_epoch=24,
                                 verbose=1,
-                                validation_data=(valImg, valLabel),
+                                # validation_data=(valImg, valLabel),
                                 callbacks=[es])
 
             scores = model.evaluate(trainImg[test_k], trainLabel[test_k])
