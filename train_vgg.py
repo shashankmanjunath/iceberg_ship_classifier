@@ -110,7 +110,7 @@ class iceberg_model:
             # yield X1i[0], X1i[1]
 
     def callbacks(self, wname):
-        es = EarlyStopping("val_loss", patience=200, mode="min")
+        es = EarlyStopping("val_loss", patience=100, mode="min")
         msave = ModelCheckpoint(filepath=wname, save_best_only=True)
         return es, msave
 
