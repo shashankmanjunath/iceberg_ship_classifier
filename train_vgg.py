@@ -70,7 +70,7 @@ class iceberg_model:
 
         predictions = Dense(1, activation='sigmoid')(x)
 
-        model = Model(input=input, output=predictions)
+        model = Model(input=base_model.input, output=predictions)
 
         opt = Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.0)
 
